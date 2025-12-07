@@ -1,0 +1,158 @@
+:root {
+    --bg-color: #ffffff;
+    /* Clean white */
+    --border-color: #eee;
+    --node-fill: #EFECE6;
+    /* Beige pills */
+    --node-stroke: #EFECE6;
+    --node-text: #111111;
+    --edge-stroke: #000000;
+    /* Pure Black */
+    --edge-text: #000;
+    --indicator-stroke: #fff;
+    --connector-fill: #333;
+    /* Dark connector dots */
+    --hover-fill: #e6f7ff;
+    --hover-stroke: #40a9ff;
+    --hover-shadow: rgba(24, 144, 255, 0.2);
+    --node-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="light"] {
+    --bg-color: #ffffff;
+    --border-color: #eee;
+    --node-fill: #EFECE6;
+    --node-stroke: #EFECE6;
+    --node-text: #111111;
+    --edge-stroke: #000000;
+    --edge-text: #000;
+    --indicator-stroke: #fff;
+    --connector-fill: #333;
+    --hover-fill: #e6f7ff;
+    --hover-stroke: #40a9ff;
+    --hover-shadow: rgba(24, 144, 255, 0.2);
+    --node-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] {
+    --bg-color: #111111;
+    --border-color: #333;
+    --node-fill: #EFECE6;
+    --node-stroke: #EFECE6;
+    --node-text: #111111;
+    --edge-stroke: #ffffff;
+    /* White edges */
+    --edge-text: #ccc;
+    --indicator-stroke: #111;
+    --connector-fill: #fff;
+    --hover-fill: #fff;
+    --hover-stroke: #fff;
+    --hover-shadow: rgba(255, 255, 255, 0.2);
+    --node-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.flowchart-container {
+    width: 100%;
+    height: 100%;
+    /* border and background are handled by container or theme, 
+       but for library defaults we can set background to be safe */
+    background-color: var(--bg-color);
+    overflow: hidden;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    position: relative;
+    transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.node-group {
+    transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease;
+    cursor: pointer;
+}
+
+.node-shape {
+    fill: var(--node-fill);
+    stroke: var(--node-stroke);
+    stroke-width: 0px;
+    transition: all 0.3s ease;
+    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.1));
+}
+
+.node-group:hover .node-shape {
+    fill: var(--hover-fill);
+    stroke: var(--hover-stroke);
+    filter: drop-shadow(0 0 8px var(--hover-shadow));
+}
+
+.node-connector {
+    fill: var(--connector-fill, #999);
+    stroke: none;
+    transition: fill 0.3s ease;
+}
+
+.node-text {
+    font-size: 14px;
+    fill: var(--node-text) !important;
+    pointer-events: none;
+    user-select: none;
+    transition: fill 0.3s ease;
+}
+
+.node-text tspan {
+    fill: inherit;
+}
+
+.edge-group {
+    transition: opacity 0.3s ease;
+}
+
+.edge-path {
+    fill: none;
+    stroke: var(--edge-stroke);
+    stroke-width: 2px;
+    stroke-opacity: 1;
+    transition: d 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), stroke 0.3s ease;
+}
+
+.edge-text {
+    font-size: 12px;
+    fill: var(--edge-text);
+    transition: fill 0.3s ease;
+}
+
+.edge-label-bg {
+    fill: var(--bg-color);
+    stroke: var(--border-color);
+    stroke-width: 1px;
+    transition: fill 0.3s ease, stroke 0.3s ease;
+}
+
+.node-indicator {
+    stroke: var(--indicator-stroke);
+    stroke-width: 1px;
+    cursor: pointer;
+    transition: fill 0.3s ease, stroke 0.3s ease;
+}
+
+/* Zoom layer */
+.zoom-layer {
+    transform-origin: 0 0;
+    transition: transform 0.1s linear;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-color);
+}
+
+::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}

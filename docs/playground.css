@@ -1,0 +1,76 @@
+/* Layout Styles for Demo Page */
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0;
+    height: 100vh;
+    scroll-behavior: smooth;
+}
+
+#controls {
+    width: 90%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.toolbar {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+}
+
+#editor {
+    flex: 1;
+    height: 150px;
+    padding: 10px;
+    font-family: monospace;
+    background-color: #333;
+    color: #fff;
+    border: 1px solid #555;
+    border-radius: 4px;
+    resize: vertical;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+#chart {
+    width: 90%;
+    flex: 1;
+    /* Background is handled by variable mostly, but we define container specs here */
+    background-color: var(--bg-color);
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    /* Ensure it has a border if needed, or rely on internal library border */
+    border: 1px solid var(--border-color);
+}
+
+button,
+select {
+    padding: 10px 20px;
+    background-color: #1890ff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: bold;
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+}
+
+button:hover,
+select:hover {
+    background-color: #40a9ff;
+}
+
+select {
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ffffff%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13.2-5.4H18.6c-5%200-9.3%201.8-13.2%205.4A17.6%2017.6%200%200%200%200%2082.6c0%204.8%201.8%209.3%205.4%2013.2l128%20127.9c3.9%203.9%208.4%205.7%2013.2%205.7s9.3-1.8%2013.2-5.7l128-127.9c3.9-3.9%205.7-8.4%205.7-13.2%200-4.8-1.8-9.3-5.7-13.2z%22%2F%3E%3C%2Fsvg%3E');
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 12px;
+    padding-right: 30px;
+}

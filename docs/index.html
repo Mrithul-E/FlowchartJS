@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlowchartJS Documentation</title>
+    <link rel="stylesheet" href="docs.css">
+</head>
+
+<body>
+    <div class="shell">
+        <!-- Top Header -->
+        <header class="header">
+            <div class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                FlowchartJS
+            </div>
+            <nav class="nav-links">
+                <a href="#features">Features</a>
+                <a href="https://github.com/mrith/flowchartjs">GitHub</a>
+                <a href="playground.html" style="color: var(--color-primary);">Playground →</a>
+            </nav>
+        </header>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Getting Started</div>
+                <a href="#intro" class="sidebar-link active">Introduction</a>
+                <a href="#installation" class="sidebar-link">Installation</a>
+                <a href="#basics" class="sidebar-link">Basic Usage</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Reference</div>
+                <a href="#config" class="sidebar-link">Configuration</a>
+                <a href="#shapes" class="sidebar-link">Shapes</a>
+                <a href="#api" class="sidebar-link">API Methods</a>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Tools</div>
+                <a href="playground.html" class="sidebar-link">Interactive Playground</a>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="content">
+            <div id="intro" class="hero">
+                <h1>FlowchartJS Documentation</h1>
+                <p>Build interactive, themeable, and performant flowcharts with simple text syntax. Zero dependencies,
+                    pure Vanilla JS.</p>
+            </div>
+
+            <!-- Card Grid -->
+            <div id="features" class="grid">
+                <a href="#installation" class="card">
+                    <div class="card-icon">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
+                        </svg>
+                    </div>
+                    <h3>Installation</h3>
+                    <p>Get up and running in seconds via CDN or npm.</p>
+                </a>
+                <a href="playground.html" class="card">
+                    <div class="card-icon">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path
+                                d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z">
+                            </path>
+                            <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                    </div>
+                    <h3>Playground</h3>
+                    <p>Try the library live in your browser.</p>
+                </a>
+                <a href="#config" class="card">
+                    <div class="card-icon">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path
+                                d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
+                            </path>
+                        </svg>
+                    </div>
+                    <h3>Configuration</h3>
+                    <p>Customize themes, layout, and interactivity.</p>
+                </a>
+                <a href="#shapes" class="card">
+                    <div class="card-icon">
+                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
+                            viewBox="0 0 24 24">
+                            <path
+                                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
+                            </path>
+                        </svg>
+                    </div>
+                    <h3>Shapes</h3>
+                    <p>Reference guide for all supported node shapes.</p>
+                </a>
+            </div>
+
+            <section id="installation" style="margin-bottom: 60px;">
+                <h2>Installation</h2>
+                <p>Include the CSS and JS files in your project:</p>
+                <pre><code class="html">&lt;link rel="stylesheet" href="dist/flowchart.css"&gt;
+&lt;script src="dist/flowchart.js"&gt;&lt;/script&gt;</code></pre>
+            </section>
+
+            <section id="basics">
+                <h2>Basic Usage</h2>
+                <p>Initialize the chart and render content:</p>
+                <div style="margin-top: 16px;">
+                    <pre><code>const chart = new FlowChart('my-chart');
+chart.render('graph TD; A[Start] --> B[End];');</code></pre>
+                </div>
+            </section>
+
+            <section id="config" style="margin-top: 60px;">
+                <h2>Configuration</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Option</th>
+                            <th>Type</th>
+                            <th>Default</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>theme</td>
+                            <td>string</td>
+                            <td>'light'</td>
+                            <td>'light' or 'dark'</td>
+                        </tr>
+                        <tr>
+                            <td>interactive</td>
+                            <td>boolean</td>
+                            <td>true</td>
+                            <td>Enable zoom/pan</td>
+                        </tr>
+                        <tr>
+                            <td>layout</td>
+                            <td>object</td>
+                            <td>...</td>
+                            <td>Layout sizing options</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+
+            <section id="shapes" style="margin-top: 60px;">
+                <h2>Supported Shapes</h2>
+                <p>Use different bracket styles to define node shapes:</p>
+                <div class="shape-list">
+                    <span class="shape-tag">[Rect]</span>
+                    <span class="shape-tag">(Round)</span>
+                    <span class="shape-tag">([Stadium])</span>
+                    <span class="shape-tag">[[Subroutine]]</span>
+                    <span class="shape-tag">[(Cylinder)]</span>
+                    <span class="shape-tag">((Circle))</span>
+                    <span class="shape-tag">{Rhombus}</span>
+                    <span class="shape-tag">{{Hexagon}}</span>
+                    <span class="shape-tag">[/Parallelogram/]</span>
+                    <span class="shape-tag">[\Alt Parallelogram\]</span>
+                    <span class="shape-tag">[/Trapezoid\]</span>
+                    <span class="shape-tag">[\Alt Trapezoid/]</span>
+                </div>
+            </section>
+
+            <section id="api" style="margin-top: 60px;">
+                <h2>API Methods</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Method</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td><code>render(input: string)</code></td>
+                            <td>Renders the chart from the given mermaid text input.</td>
+                        </tr>
+                        <tr>
+                            <td><code>setTheme(theme: string)</code></td>
+                            <td>Switches the theme dynamically ('light' or 'dark').</td>
+                        </tr>
+                        <tr>
+                            <td><code>exportImage()</code></td>
+                            <td>Exports the current view as a PNG image.</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </section>
+        </main>
+    </div>
+</body>
+
+</html>

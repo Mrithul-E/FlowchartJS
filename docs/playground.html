@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FlowchartJS Playground</title>
+    <link rel="stylesheet" href="docs.css">
+    <link rel="stylesheet" href="../dist/flowchart.css">
+    <link rel="stylesheet" href="playground.css">
+</head>
+
+<body>
+    <div class="shell">
+        <!-- Top Header -->
+        <header class="header">
+            <div class="logo">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
+                </svg>
+                FlowchartJS
+            </div>
+            <nav class="nav-links">
+                <a href="index.html">Docs</a>
+                <a href="https://github.com/mrith/flowchartjs">GitHub</a>
+                <a href="#" style="color: var(--color-primary); font-weight: 600;">Playground</a>
+            </nav>
+        </header>
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Playground Controls</div>
+                <div style="display: flex; flex-direction: column; gap: 8px;">
+                    <label style="font-size: 0.85rem; color: var(--color-text-subtle);">Load Example</label>
+                    <select id="exampleSelect" onchange="loadExample()" class="playground-select">
+                        <option value="complex">Complex Example</option>
+                        <option value="simple">Simple Tree</option>
+                        <option value="horizontal">Horizontal Process</option>
+                        <option value="shapes">All Shapes</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-title">Actions</div>
+                <button onclick="updateGraph()" class="sidebar-btn primary">Update Graph</button>
+                <button onclick="toggleTheme()" id="themeBtn" class="sidebar-btn">🌙 Dark Mode</button>
+                <button onclick="exportGraph()" class="sidebar-btn">📷 Export PNG</button>
+            </div>
+        </aside>
+
+        <!-- Main Content (Playground) -->
+        <main class="content full-screen">
+            <div id="playground-layout">
+                <div class="editor-pane">
+                    <textarea id="editor" spellcheck="false"
+                        placeholder="Enter mermaid graph syntax here..."></textarea>
+                </div>
+                <div class="chart-pane">
+                    <div id="chart"></div>
+                </div>
+            </div>
+
+            <!-- SVG Marker Definition -->
+            <svg style="position: absolute; width: 0; height: 0; overflow: hidden;">
+                <defs>
+                    <marker id="arrowhead" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6"
+                        orient="auto">
+                        <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--edge-stroke)" class="arrowhead-path" />
+                    </marker>
+                </defs>
+            </svg>
+        </main>
+    </div>
+
+    <!-- Playground Specific Styles override -->
+    <style>
+        .playground-select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid var(--color-border);
+            border-radius: 6px;
+            background: #fff;
+            font-size: 0.9rem;
+            color: var(--color-text);
+        }
+
+        .sidebar-btn {
+            width: 100%;
+            padding: 8px;
+            margin-bottom: 8px;
+            border: 1px solid var(--color-border);
+            background: white;
+            border-radius: 6px;
+            font-weight: 500;
+            cursor: pointer;
+            color: var(--color-text);
+            transition: all 0.2s;
+            text-align: left;
+            padding-left: 12px;
+        }
+
+        .sidebar-btn:hover {
+            border-color: var(--color-primary);
+            color: var(--color-primary);
+        }
+
+        .sidebar-btn.primary {
+            background: var(--color-primary);
+            color: white;
+            border-color: var(--color-primary);
+            text-align: center;
+        }
+
+        .sidebar-btn.primary:hover {
+            background: var(--color-primary-hover);
+        }
+
+        /* Full height layout for playground */
+        #playground-layout {
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+        }
+
+        .editor-pane {
+            height: 200px;
+            border-bottom: 1px solid var(--color-border);
+            background: #2d2d2d;
+        }
+
+        #editor {
+            width: 100%;
+            height: 100%;
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 16px;
+            border: none;
+            font-family: var(--font-mono);
+            font-size: 0.9rem;
+            resize: none;
+        }
+
+        #editor:focus {
+            outline: none;
+        }
+
+        .chart-pane {
+            flex: 1;
+            position: relative;
+            background: var(--bg-color);
+            /* Theme aware */
+            overflow: hidden;
+        }
+
+        #chart {
+            width: 100%;
+            height: 100%;
+        }
+    </style>
+
+    <script src="../dist/flowchart.js"></script>
+    <script>
+        // Initialize with Config API
+        const chart = new FlowChart('chart', {
+            theme: 'light',
+            interactive: true,
+            layout: {
+                nodeWidth: 140,
+                nodeHeight: 50
+            }
+        });
+
+        const editor = document.getElementById('editor');
+
+        const examples = {
+            complex: `graph TD
+    A[Start] --> B{Is it working?}
+    B -->|Yes| C[Great!]
+    B -->|No| D[Debug]
+    D --> E((Check Logs))
+    E --> F[/Found Error?/]
+    F -->|Yes| G[Fix It]
+    F -->|No| H[(Database)]
+    G --> B
+    C --> I([End])
+    H -.-> D
+    
+    sub1[[Subroutine]]
+    db[(Storage)]
+    
+    C --> sub1
+    sub1 --> db`,
+            simple: `graph TD
+    Root[Root Node] --> Child1[Child 1]
+    Root --> Child2[Child 2]
+    Child1 --> GC1[Grandchild 1]
+    Child1 --> GC2[Grandchild 2]
+    Child2 --> GC3[Grandchild 3]`,
+            horizontal: `graph LR
+    Step1[Input] --> Step2[Process]
+    Step2 --> Step3{Decision}
+    Step3 -->|Pass| Step4[Output]
+    Step3 -->|Fail| Step1`,
+            shapes: `graph TD
+    A[Rect] --> B(Round)
+    B --> C([Stadium])
+    C --> D[[Subroutine]]
+    D --> E[(Cylinder)]
+    E --> F((Circle))
+    F --> G{Rhombus}
+    G --> H{{Hexagon}}
+    H --> I[/Parallelogram/]
+    I --> J[\\Alt Parallelogram\\]
+    J --> K[/Trapezoid\\]
+    K --> L[\\Alt Trapezoid/]`
+        };
+
+        function loadExample() {
+            const key = document.getElementById('exampleSelect').value;
+            editor.value = examples[key];
+            updateGraph();
+        }
+
+        function updateGraph() {
+            chart.render(editor.value);
+        }
+
+        function toggleTheme() {
+            const currentTheme = chart.config.theme;
+            const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+            chart.setTheme(newTheme);
+
+            const btn = document.getElementById('themeBtn');
+            btn.textContent = newTheme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+        }
+
+        function exportGraph() {
+            chart.exportImage();
+        }
+
+        // Initial render
+        loadExample();
+    </script>
+</body>
+
+</html>
