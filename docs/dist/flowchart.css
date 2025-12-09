@@ -156,3 +156,36 @@
 ::-webkit-scrollbar-thumb:hover {
     background: #555;
 }
+
+/* Zoom Controls */
+.flowchart-zoom-controls {
+    position: absolute;
+    bottom: 16px;
+    right: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    z-index: 100;
+}
+
+.flowchart-zoom-btn {
+    width: 36px;
+    height: 36px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-color);
+    color: var(--edge-stroke);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 18px;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.flowchart-zoom-btn:hover {
+    background: var(--hover-fill);
+    border-color: var(--hover-stroke);
+}

@@ -71,8 +71,63 @@ class FlowChart {
         defs.appendChild(marker);
         this.svg.appendChild(defs);
 
+        // Add zoom controls
         if (this.config.interactive) {
+            this.createZoomControls();
             this.setupInteractions();
+        }
+    }
+
+    createZoomControls() {
+        const controlsContainer = document.createElement('div');
+        controlsContainer.className = 'flowchart-zoom-controls';
+
+        const zoomIn = document.createElement('button');
+        zoomIn.className = 'flowchart-zoom-btn';
+        zoomIn.innerHTML = '+';
+        zoomIn.title = 'Zoom In';
+        zoomIn.addEventListener('click', () => this.zoomIn());
+
+        const zoomOut = document.createElement('button');
+        zoomOut.className = 'flowchart-zoom-btn';
+        zoomOut.innerHTML = '−';
+        zoomOut.title = 'Zoom Out';
+        zoomOut.addEventListener('click', () => this.zoomOut());
+
+        const zoomReset = document.createElement('button');
+        zoomReset.className = 'flowchart-zoom-btn';
+        zoomReset.innerHTML = '⟲';
+        zoomReset.title = 'Reset View';
+        zoomReset.addEventListener('click', () => this.resetZoom());
+
+        controlsContainer.appendChild(zoomIn);
+        controlsContainer.appendChild(zoomOut);
+        controlsContainer.appendChild(zoomReset);
+
+        this.container.style.position = 'relative';
+        this.container.appendChild(controlsContainer);
+    }
+
+    zoomIn() {
+        if (this.transform) {
+            this.transform.scale = Math.min(this.transform.scale * 1.2, 3);
+            this.updateTransform(this.transform);
+        }
+    }
+
+    zoomOut() {
+        if (this.transform) {
+            this.transform.scale = Math.max(this.transform.scale / 1.2, 0.3);
+            this.updateTransform(this.transform);
+        }
+    }
+
+    resetZoom() {
+        if (this.transform) {
+            this.transform.scale = 1;
+            this.transform.x = this.container.clientWidth / 2;
+            this.transform.y = 50;
+            this.updateTransform(this.transform);
         }
     }
 
