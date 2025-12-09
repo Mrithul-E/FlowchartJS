@@ -20,18 +20,18 @@ A lightweight, themeable, and interactive flowchart library for the modern web. 
 ```
 
 ### Local Manual Installation
-Download the files from the `dist/` folder and include them in your project:
+Download the files from the `docs/dist/` folder and include them in your project:
 ```html
-<link rel="stylesheet" href="dist/flowchart.css">
-<script src="dist/flowchart.js"></script>
+<link rel="stylesheet" href="docs/dist/flowchart.css">
+<script src="docs/dist/flowchart.js"></script>
 ```
 
-## Quick Start
+## Quick Start (Local)        
 
 1. **Include the files**:
    ```html
-   <link rel="stylesheet" href="dist/flowchart.css">
-   <script src="dist/flowchart.js"></script>
+   <link rel="stylesheet" href="docs/dist/flowchart.css">
+   <script src="docs/dist/flowchart.js"></script>
    ```
 
 2. **Create a container**:
