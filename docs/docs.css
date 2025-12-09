@@ -61,20 +61,24 @@ a:hover {
 
 /* Layout Shell */
 .shell {
-    display: grid;
-    grid-template-columns: var(--sidebar-width) 1fr;
-    grid-template-rows: var(--header-height) 1fr;
+    display: flex;
+    flex-wrap: wrap;
     min-height: 100vh;
     width: 100%;
 }
 
+.shell>* {
+    flex-shrink: 0;
+}
+
 /* Header (Top Nav) */
 .header {
-    grid-column: 1 / -1;
+    flex-basis: 100%;
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 0 24px;
+    height: var(--header-height);
     border-bottom: 1px solid var(--color-border);
     position: sticky;
     top: 0;
@@ -109,6 +113,7 @@ a:hover {
 
 /* Sidebar */
 .sidebar {
+    width: var(--sidebar-width);
     border-right: 1px solid var(--color-border);
     padding: 24px;
     position: sticky;
@@ -149,6 +154,7 @@ a:hover {
 
 /* Main Content */
 .content {
+    flex: 1;
     padding: 40px 60px;
     max-width: 1000px;
 }
@@ -279,17 +285,49 @@ th {
 }
 
 /* Mobile Responsiveness */
-@media (max-width: 768px) {
+@media (max-width: 991.98px) {
     .shell {
-        grid-template-columns: 1fr;
+        flex-direction: column;
+    }
+
+    .header {
+        position: sticky;
+        top: 0;
     }
 
     .sidebar {
-        display: none;
-        /* Collapsed by default for mvp */
+        width: 100%;
+        height: auto;
+        position: relative;
+        top: 0;
+        border-right: none;
+        border-bottom: 1px solid var(--color-border);
+        padding: 16px 24px;
+        max-height: none;
+    }
+
+    .sidebar-section {
+        margin-bottom: 16px;
+    }
+
+    /* Make sidebar links more touch-friendly */
+    .sidebar-link {
+        padding: 8px 0;
     }
 
     .content {
         padding: 24px;
+        max-width: 100%;
+        overflow-x: hidden;
+        width: 100%;
+    }
+
+    .content.full-screen {
+        height: auto;
+        min-height: calc(100vh - 60px);
+    }
+
+    .grid {
+        grid-template-columns: 1fr;
     }
 }

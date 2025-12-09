@@ -81,8 +81,9 @@ class FlowChart {
         let startX = 0, startY = 0;
         let transform = { x: 0, y: 0, scale: 1 };
 
+        // Mouse events for desktop
         this.svg.addEventListener('mousedown', (e) => {
-            if (e.target.closest('.node-group')) return; // Don't pan if clicking node
+            if (e.target.closest('.node-group')) return;
             isPanning = true;
             startX = e.clientX - transform.x;
             startY = e.clientY - transform.y;
@@ -99,6 +100,27 @@ class FlowChart {
         window.addEventListener('mouseup', () => {
             isPanning = false;
             this.svg.style.cursor = 'default';
+        });
+
+        // Touch events for mobile
+        this.svg.addEventListener('touchstart', (e) => {
+            if (e.target.closest('.node-group')) return;
+            if (e.touches.length === 1) {
+                isPanning = true;
+                startX = e.touches[0].clientX - transform.x;
+                startY = e.touches[0].clientY - transform.y;
+            }
+        }, { passive: true });
+
+        window.addEventListener('touchmove', (e) => {
+            if (!isPanning || e.touches.length !== 1) return;
+            transform.x = e.touches[0].clientX - startX;
+            transform.y = e.touches[0].clientY - startY;
+            this.updateTransform(transform);
+        }, { passive: true });
+
+        window.addEventListener('touchend', () => {
+            isPanning = false;
         });
 
         // Center initially
@@ -590,49 +612,302 @@ class FlowChart {
         }
     }
 
-    exportImage() {
-        const serializer = new XMLSerializer();
-        let source = serializer.serializeToString(this.svg);
+    getStyledSVGClone() {
+        // Get computed styles from the container to resolve CSS variables
+        const containerStyles = getComputedStyle(this.container);
+        const resolvedBg = containerStyles.getPropertyValue('--bg-color').trim() || '#ffffff';
+        const resolvedNodeFill = containerStyles.getPropertyValue('--node-fill').trim() || '#EFECE6';
+        const resolvedNodeStroke = containerStyles.getPropertyValue('--node-stroke').trim() || '#EFECE6';
+        const resolvedNodeText = containerStyles.getPropertyValue('--node-text').trim() || '#111111';
+        const resolvedEdgeStroke = containerStyles.getPropertyValue('--edge-stroke').trim() || '#000000';
+        const resolvedEdgeText = containerStyles.getPropertyValue('--edge-text').trim() || '#000';
+        const resolvedConnectorFill = containerStyles.getPropertyValue('--connector-fill').trim() || '#333';
+        const resolvedLabelBg = containerStyles.getPropertyValue('--bg-color').trim() || '#ffffff';
+        const resolvedBorderColor = containerStyles.getPropertyValue('--border-color').trim() || '#eee';
 
-        if (!source.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) {
-            source = source.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
-        }
-        if (!source.match(/^<svg[^>]+xmlns:xlink="http\:\/\/www\.w3\.org\/1999\/xlink"/)) {
-            source = source.replace(/^<svg/, '<svg xmlns:xlink="http://www.w3.org/1999/xlink"');
-        }
-
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
+        // Get the bounding box of the content
         const bbox = this.g.getBBox();
-        const width = bbox.width + 100;
-        const height = bbox.height + 100;
+        const padding = 60;
+        const width = bbox.width + padding * 2;
+        const height = bbox.height + padding * 2;
 
+        // Create a new SVG element for export (not a clone - build it fresh)
+        const svgExport = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svgExport.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
+        svgExport.setAttribute('xmlns:xlink', 'http://www.w3.org/1999/xlink');
+        svgExport.setAttribute('width', width);
+        svgExport.setAttribute('height', height);
+        svgExport.setAttribute('viewBox', `0 0 ${width} ${height}`);
+
+        // Add background rect
+        const bgRect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+        bgRect.setAttribute('width', '100%');
+        bgRect.setAttribute('height', '100%');
+        bgRect.setAttribute('fill', resolvedBg);
+        svgExport.appendChild(bgRect);
+
+        // Add arrow marker definition
+        const defs = document.createElementNS('http://www.w3.org/2000/svg', 'defs');
+        const marker = document.createElementNS('http://www.w3.org/2000/svg', 'marker');
+        marker.setAttribute('id', 'arrowhead-export');
+        marker.setAttribute('viewBox', '0 0 10 10');
+        marker.setAttribute('refX', '9');
+        marker.setAttribute('refY', '5');
+        marker.setAttribute('markerWidth', '6');
+        marker.setAttribute('markerHeight', '6');
+        marker.setAttribute('orient', 'auto');
+        const arrowPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        arrowPath.setAttribute('d', 'M 0 0 L 10 5 L 0 10 z');
+        arrowPath.setAttribute('fill', resolvedEdgeStroke);
+        marker.appendChild(arrowPath);
+        defs.appendChild(marker);
+        svgExport.appendChild(defs);
+
+        // Create a group for the content, translated to center it
+        const contentGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        const translateX = padding - bbox.x;
+        const translateY = padding - bbox.y;
+        contentGroup.setAttribute('transform', `translate(${translateX}, ${translateY})`);
+
+        // Draw all visible edges first
+        this.data.edges.forEach(edge => {
+            const source = this.data.nodes[edge.from];
+            const target = this.data.nodes[edge.to];
+            if (!source.visible || !target.visible) return;
+
+            const edgeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+
+            const isHorizontal = this.data.direction === 'LR' || this.data.direction === 'RL';
+            let x1, y1, x2, y2;
+
+            if (isHorizontal) {
+                x1 = source.x + this.nodeWidth / 2;
+                y1 = source.y;
+                x2 = target.x - this.nodeWidth / 2;
+                y2 = target.y;
+            } else {
+                x1 = source.x;
+                y1 = source.y + this.nodeHeight / 2;
+                x2 = target.x;
+                y2 = target.y - this.nodeHeight / 2;
+            }
+
+            let d;
+            if (isHorizontal) {
+                const c1x = x1 + (x2 - x1) / 2;
+                const c1y = y1;
+                const c2x = x2 - (x2 - x1) / 2;
+                const c2y = y2;
+                d = `M ${x1} ${y1} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${x2} ${y2}`;
+            } else {
+                const c1x = x1;
+                const c1y = y1 + (y2 - y1) / 2;
+                const c2x = x2;
+                const c2y = y2 - (y2 - y1) / 2;
+                d = `M ${x1} ${y1} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${x2} ${y2}`;
+            }
+
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', d);
+            path.setAttribute('fill', 'none');
+            path.setAttribute('stroke', resolvedEdgeStroke);
+            path.setAttribute('stroke-width', edge.type === 'thick' ? '4' : '2');
+            if (edge.type === 'dotted') path.setAttribute('stroke-dasharray', '5,5');
+            if (edge.type !== 'open') path.setAttribute('marker-end', 'url(#arrowhead-export)');
+
+            edgeGroup.appendChild(path);
+
+            // Edge label
+            if (edge.label) {
+                const mx = (x1 + x2) / 2;
+                const my = (y1 + y2) / 2;
+                const labelWidth = edge.label.length * 8 + 8;
+                const labelHeight = 18;
+
+                const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                rect.setAttribute('x', mx - labelWidth / 2);
+                rect.setAttribute('y', my - labelHeight / 2);
+                rect.setAttribute('width', labelWidth);
+                rect.setAttribute('height', labelHeight);
+                rect.setAttribute('fill', resolvedLabelBg);
+                rect.setAttribute('stroke', resolvedBorderColor);
+                rect.setAttribute('stroke-width', '1');
+                edgeGroup.appendChild(rect);
+
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', mx);
+                text.setAttribute('y', my);
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('dominant-baseline', 'middle');
+                text.setAttribute('fill', resolvedEdgeText);
+                text.setAttribute('font-size', '12px');
+                text.setAttribute('font-family', 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif');
+                text.textContent = edge.label;
+                edgeGroup.appendChild(text);
+            }
+
+            contentGroup.appendChild(edgeGroup);
+        });
+
+        // Draw all visible nodes
+        Object.values(this.data.nodes).forEach(node => {
+            if (!node.visible) return;
+
+            const nodeGroup = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+            nodeGroup.setAttribute('transform', `translate(${node.x}, ${node.y})`);
+
+            // Node shape
+            const shapePath = this.getShapePath(node.shape, this.nodeWidth, this.nodeHeight);
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', shapePath);
+            path.setAttribute('fill', resolvedNodeFill);
+            path.setAttribute('stroke', resolvedNodeStroke);
+            path.setAttribute('stroke-width', '0');
+            nodeGroup.appendChild(path);
+
+            // Connector dots
+            const isHorizontal = this.data.direction === 'LR' || this.data.direction === 'RL';
+            const dotRadius = 3;
+            const dots = [];
+            if (isHorizontal) {
+                if ((node.parents && node.parents.length > 0) || (node.id !== this.root?.id)) {
+                    dots.push({ x: -this.nodeWidth / 2, y: 0 });
+                }
+                if (node.children && node.children.length > 0) {
+                    dots.push({ x: this.nodeWidth / 2, y: 0 });
+                }
+            } else {
+                if ((node.parents && node.parents.length > 0) || (node.id !== this.root?.id)) {
+                    dots.push({ x: 0, y: -this.nodeHeight / 2 });
+                }
+                if (node.children && node.children.length > 0) {
+                    dots.push({ x: 0, y: this.nodeHeight / 2 });
+                }
+            }
+
+            dots.forEach(d => {
+                const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                circle.setAttribute('cx', d.x);
+                circle.setAttribute('cy', d.y);
+                circle.setAttribute('r', dotRadius);
+                circle.setAttribute('fill', resolvedConnectorFill);
+                nodeGroup.appendChild(circle);
+            });
+
+            // Node text
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('text-anchor', 'middle');
+            text.setAttribute('fill', resolvedNodeText);
+            text.setAttribute('font-size', '14px');
+            text.setAttribute('font-family', 'Segoe UI, Tahoma, Geneva, Verdana, sans-serif');
+
+            const lines = node.lines || [node.label];
+            if (lines.length === 1) {
+                text.setAttribute('dominant-baseline', 'middle');
+                text.textContent = lines[0];
+            } else {
+                const lineHeight = 1.2;
+                const startY = -((lines.length - 1) * lineHeight) / 2;
+                lines.forEach((line, index) => {
+                    const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
+                    tspan.setAttribute('x', 0);
+                    tspan.setAttribute('dy', index === 0 ? startY + 'em' : lineHeight + 'em');
+                    tspan.textContent = line;
+                    text.appendChild(tspan);
+                });
+            }
+            nodeGroup.appendChild(text);
+
+            // Collapse indicator
+            if (node.children && node.children.length > 0) {
+                const indicator = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+                if (isHorizontal) {
+                    indicator.setAttribute('cx', this.nodeWidth / 2 + 6);
+                    indicator.setAttribute('cy', 0);
+                } else {
+                    indicator.setAttribute('cx', 0);
+                    indicator.setAttribute('cy', this.nodeHeight / 2 + 8);
+                }
+                indicator.setAttribute('r', 5);
+                indicator.setAttribute('fill', node.collapsed ? '#ff5555' : '#55ff55');
+                indicator.setAttribute('stroke', resolvedBg === '#111111' ? '#111' : '#fff');
+                indicator.setAttribute('stroke-width', '1');
+                nodeGroup.appendChild(indicator);
+            }
+
+            contentGroup.appendChild(nodeGroup);
+        });
+
+        svgExport.appendChild(contentGroup);
+
+        return { svgClone: svgExport, width, height, resolvedBg };
+    }
+
+    exportSVG() {
+        const { svgClone } = this.getStyledSVGClone();
+        const serializer = new XMLSerializer();
+        const source = serializer.serializeToString(svgClone);
+
+        const blob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+
+        const downloadLink = document.createElement('a');
+        downloadLink.href = url;
+        downloadLink.download = 'flowchart.svg';
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        document.body.removeChild(downloadLink);
+        URL.revokeObjectURL(url);
+    }
+
+    exportImage() {
+        const { svgClone, width, height, resolvedBg } = this.getStyledSVGClone();
+
+        const serializer = new XMLSerializer();
+        const source = serializer.serializeToString(svgClone);
+
+        const img = new Image();
         const svgBlob = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
         const url = URL.createObjectURL(svgBlob);
 
         img.onload = () => {
+            const canvas = document.createElement('canvas');
             canvas.width = width;
             canvas.height = height;
-            const bgColor = getComputedStyle(document.documentElement).getPropertyValue('--bg-color').trim();
-            ctx.fillStyle = bgColor;
+            const ctx = canvas.getContext('2d');
+
+            // Paint background
+            ctx.fillStyle = resolvedBg;
             ctx.fillRect(0, 0, width, height);
-            ctx.drawImage(img, 0, 0);
-            const pngUrl = canvas.toDataURL('image/png');
-            const downloadLink = document.createElement('a');
-            downloadLink.href = pngUrl;
-            downloadLink.download = 'flowchart.png';
-            document.body.appendChild(downloadLink);
-            downloadLink.click();
-            document.body.removeChild(downloadLink);
+
+            // Draw
+            ctx.drawImage(img, 0, 0, width, height);
+
+            try {
+                canvas.toBlob((blob) => {
+                    if (blob) {
+                        const blobUrl = URL.createObjectURL(blob);
+                        const downloadLink = document.createElement('a');
+                        downloadLink.href = blobUrl;
+                        downloadLink.download = 'flowchart.png';
+                        document.body.appendChild(downloadLink);
+                        downloadLink.click();
+                        document.body.removeChild(downloadLink);
+                        URL.revokeObjectURL(blobUrl);
+                    }
+                }, 'image/png');
+                URL.revokeObjectURL(url);
+            } catch (e) {
+                console.error("Export failed", e);
+                window.open(canvas.toDataURL('image/png'), '_blank');
+            }
+        };
+
+        img.onerror = () => {
+            console.error("Failed to load SVG for export");
             URL.revokeObjectURL(url);
         };
 
-        const x = bbox.x - 50;
-        const y = bbox.y - 50;
-        source = source.replace('<svg', `<svg viewBox="${x} ${y} ${width} ${height}"`);
-        const svgBlobWithViewBox = new Blob([source], { type: 'image/svg+xml;charset=utf-8' });
-        const urlWithViewBox = URL.createObjectURL(svgBlobWithViewBox);
-        img.src = urlWithViewBox;
+        img.src = url;
     }
 }

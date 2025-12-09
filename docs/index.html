@@ -4,205 +4,970 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlowchartJS Documentation</title>
-    <link rel="stylesheet" href="docs.css">
+    <title>FlowchartJS - Interactive Flowcharts with JavaScript</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="../dist/flowchart.css">
+    <style>
+        :root {
+            --bg-primary: #1a1a2e;
+            --bg-secondary: #16162a;
+            --bg-sidebar: #1e1e3f;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0b0;
+            --text-muted: #6b6b80;
+            --accent: #ff0080;
+            --accent-hover: #ff3399;
+            --accent-dim: rgba(255, 0, 128, 0.15);
+            --border: #2a2a4a;
+            --code-bg: #0d0d1a;
+            --link-color: #ff6b9d;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html,
+        body {
+            overflow-x: hidden;
+            width: 100%;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            line-height: 1.6;
+            padding-top: 60px;
+        }
+
+        /* Top Navigation */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            background: rgba(26, 26, 46, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            padding: 0 24px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .navbar-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: var(--text-primary);
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 1.1rem;
+        }
+
+        .navbar-brand svg {
+            color: var(--accent);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .nav-link {
+            color: var(--text-secondary);
+            text-decoration: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            color: var(--text-primary);
+            background: var(--accent-dim);
+        }
+
+        .nav-link.active {
+            color: var(--accent);
+        }
+
+        .btn-playground {
+            background: var(--accent);
+            color: white;
+            padding: 8px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-playground:hover {
+            background: var(--accent-hover);
+            transform: translateY(-1px);
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-primary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 8px;
+        }
+
+        /* Layout */
+        .layout {
+            display: flex;
+            min-height: calc(100vh - 60px);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            width: 280px;
+            background: var(--bg-sidebar);
+            border-right: 1px solid var(--border);
+            padding: 24px 0;
+            overflow-y: auto;
+            flex-shrink: 0;
+            position: fixed;
+            top: 60px;
+            left: 0;
+            height: calc(100vh - 60px);
+            z-index: 100;
+        }
+
+        .sidebar-spacer {
+            width: 280px;
+            flex-shrink: 0;
+        }
+
+        .sidebar-section {
+            margin-bottom: 8px;
+        }
+
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 24px;
+            color: var(--text-primary);
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .sidebar-header:hover {
+            background: var(--accent-dim);
+        }
+
+        .sidebar-header svg {
+            width: 16px;
+            height: 16px;
+            transition: transform 0.2s;
+        }
+
+        .sidebar-header.collapsed svg {
+            transform: rotate(-90deg);
+        }
+
+        .sidebar-links {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .sidebar-links.hidden {
+            display: none;
+        }
+
+        .sidebar-link {
+            display: block;
+            padding: 8px 24px 8px 48px;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .sidebar-link:hover {
+            color: var(--accent);
+            background: var(--accent-dim);
+        }
+
+        .sidebar-link.active {
+            color: var(--accent);
+            border-right: 3px solid var(--accent);
+        }
+
+        /* Main Content */
+        .main-content {
+            flex: 1;
+            padding: 40px 40px;
+            max-width: 900px;
+            min-width: 0;
+        }
+
+        /* Banner */
+        .banner {
+            background: linear-gradient(135deg, var(--accent) 0%, #6366f1 100%);
+            border-radius: 12px;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            gap: 16px;
+        }
+
+        .banner-text {
+            font-weight: 500;
+            font-size: 0.95rem;
+        }
+
+        .banner-btn {
+            background: white;
+            color: var(--accent);
+            padding: 8px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            font-size: 0.85rem;
+            transition: all 0.2s;
+        }
+
+        .banner-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Typography */
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 20px;
+            letter-spacing: -0.02em;
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin: 48px 0 20px;
+            padding-top: 24px;
+            border-top: 1px solid var(--border);
+        }
+
+        h2:first-of-type {
+            border-top: none;
+            margin-top: 0;
+        }
+
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 16px;
+        }
+
+        .lead {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            margin-bottom: 32px;
+        }
+
+        a {
+            color: var(--link-color);
+        }
+
+        /* Info Block */
+        .info-block {
+            background: var(--accent-dim);
+            border-left: 4px solid var(--accent);
+            padding: 16px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 24px 0;
+        }
+
+        .info-block p {
+            margin: 0;
+            color: var(--text-secondary);
+        }
+
+        .info-block a {
+            color: var(--link-color);
+        }
+
+        /* Code Blocks */
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            overflow-x: auto;
+            margin: 16px 0;
+        }
+
+        code {
+            font-family: 'SF Mono', Consolas, 'Liberation Mono', Menlo, monospace;
+            font-size: 0.9rem;
+            color: #e0e0e0;
+        }
+
+        .inline-code {
+            background: var(--code-bg);
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+        }
+
+        /* Demo Preview */
+        .demo-container {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 24px 0;
+        }
+
+        .demo-header {
+            background: var(--code-bg);
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .demo-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+        }
+
+        .demo-dot.red {
+            background: #ff5f56;
+        }
+
+        .demo-dot.yellow {
+            background: #ffbd2e;
+        }
+
+        .demo-dot.green {
+            background: #27ca40;
+        }
+
+        .demo-preview {
+            padding: 24px;
+            min-height: 300px;
+        }
+
+        #demo-chart {
+            width: 100%;
+            height: 300px;
+        }
+
+        /* Tag Pills */
+        .tag-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin: 16px 0;
+        }
+
+        .tag {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-family: 'SF Mono', Consolas, monospace;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+        }
+
+        /* Tables */
+        .table-container {
+            overflow-x: auto;
+            margin: 16px 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        th,
+        td {
+            padding: 12px 16px;
+            text-align: left;
+            border: 1px solid var(--border);
+        }
+
+        th {
+            background: var(--code-bg);
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        td {
+            color: var(--text-secondary);
+        }
+
+        td code {
+            color: var(--link-color);
+        }
+
+        /* Right Sidebar - On This Page */
+        .toc {
+            width: 220px;
+            padding: 24px;
+            position: sticky;
+            top: 60px;
+            height: calc(100vh - 60px);
+            overflow-y: auto;
+            flex-shrink: 0;
+        }
+
+        .toc-title {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        .toc-link {
+            display: block;
+            padding: 6px 0;
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.85rem;
+            transition: color 0.2s;
+        }
+
+        .toc-link:hover,
+        .toc-link.active {
+            color: var(--accent);
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 1200px) {
+            .toc {
+                display: none;
+            }
+        }
+
+        @media (max-width: 900px) {
+            .sidebar {
+                position: fixed;
+                left: -300px;
+                top: 60px;
+                height: calc(100vh - 60px);
+                z-index: 999;
+                transition: left 0.3s;
+            }
+
+            .sidebar.open {
+                left: 0;
+            }
+
+            .menu-toggle {
+                display: block;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .sidebar-spacer {
+                display: none;
+            }
+
+            .main-content {
+                padding: 20px 16px;
+                max-width: 100%;
+            }
+
+            h1 {
+                font-size: 1.5rem;
+            }
+
+            h2 {
+                font-size: 1.25rem;
+            }
+
+            .banner {
+                flex-direction: column;
+                text-align: center;
+                padding: 16px;
+            }
+
+            pre {
+                padding: 12px;
+                font-size: 0.8rem;
+            }
+
+            .tag-container {
+                justify-content: center;
+            }
+
+            .demo-preview {
+                padding: 12px;
+                min-height: 250px;
+            }
+
+            #demo-chart {
+                height: 250px;
+            }
+        }
+
+        .overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 998;
+        }
+
+        .overlay.active {
+            display: block;
+        }
+    </style>
 </head>
 
 <body>
-    <div class="shell">
-        <!-- Top Header -->
-        <header class="header">
-            <div class="logo">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <rect x="3" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="3" width="7" height="7"></rect>
-                    <rect x="14" y="14" width="7" height="7"></rect>
-                    <rect x="3" y="14" width="7" height="7"></rect>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+            <a class="navbar-brand" href="#">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z" />
                 </svg>
                 FlowchartJS
-            </div>
-            <nav class="nav-links">
-                <a href="#features">Features</a>
-                <a href="https://github.com/Mrithul-E/FlowchartJS">GitHub</a>
-                <a href="playground.html" style="color: var(--color-primary);">Playground →</a>
-            </nav>
-        </header>
+            </a>
+        </div>
+        <div class="nav-links">
+            <a href="#" class="nav-link active">Docs</a>
+            <a href="https://github.com/Mrithul-E/FlowchartJS" class="nav-link">GitHub</a>
+            <a href="playground.html" class="btn-playground">
+                Try Now
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M5 12h14M12 5l7 7-7 7" />
+                </svg>
+            </a>
+        </div>
+    </nav>
 
-        <!-- Sidebar -->
-        <aside class="sidebar">
+    <div class="overlay" onclick="toggleSidebar()"></div>
+
+    <div class="layout">
+        <!-- Left Sidebar -->
+        <aside class="sidebar" id="sidebar">
             <div class="sidebar-section">
-                <div class="sidebar-title">Getting Started</div>
-                <a href="#intro" class="sidebar-link active">Introduction</a>
-                <a href="#installation" class="sidebar-link">Installation</a>
-                <a href="#basics" class="sidebar-link">Basic Usage</a>
+                <div class="sidebar-header" onclick="toggleSection(this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 9l6 6 6-6" />
+                    </svg>
+                    Introduction
+                </div>
+                <div class="sidebar-links">
+                    <a href="#about" class="sidebar-link active">About FlowchartJS</a>
+                    <a href="#getting-started" class="sidebar-link">Getting Started</a>
+                    <a href="#syntax" class="sidebar-link">Syntax Guide</a>
+                </div>
             </div>
+
             <div class="sidebar-section">
-                <div class="sidebar-title">Reference</div>
-                <a href="#config" class="sidebar-link">Configuration</a>
-                <a href="#shapes" class="sidebar-link">Shapes</a>
-                <a href="#api" class="sidebar-link">API Methods</a>
+                <div class="sidebar-header" onclick="toggleSection(this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 9l6 6 6-6" />
+                    </svg>
+                    Diagram Syntax
+                </div>
+                <div class="sidebar-links">
+                    <a href="#shapes" class="sidebar-link">Node Shapes</a>
+                    <a href="#edges" class="sidebar-link">Edge Types</a>
+                    <a href="#direction" class="sidebar-link">Direction</a>
+                </div>
             </div>
+
             <div class="sidebar-section">
-                <div class="sidebar-title">Tools</div>
-                <a href="playground.html" class="sidebar-link">Interactive Playground</a>
+                <div class="sidebar-header" onclick="toggleSection(this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 9l6 6 6-6" />
+                    </svg>
+                    Configuration
+                </div>
+                <div class="sidebar-links">
+                    <a href="#config" class="sidebar-link">Options</a>
+                    <a href="#themes" class="sidebar-link">Themes</a>
+                    <a href="#api" class="sidebar-link">API Methods</a>
+                </div>
+            </div>
+
+            <div class="sidebar-section">
+                <div class="sidebar-header" onclick="toggleSection(this)">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M6 9l6 6 6-6" />
+                    </svg>
+                    Export
+                </div>
+                <div class="sidebar-links">
+                    <a href="#export-png" class="sidebar-link">Export PNG</a>
+                    <a href="#export-svg" class="sidebar-link">Export SVG</a>
+                </div>
             </div>
         </aside>
 
+        <!-- Spacer for fixed sidebar -->
+        <div class="sidebar-spacer"></div>
+
         <!-- Main Content -->
-        <main class="content">
-            <div id="intro" class="hero">
-                <h1>FlowchartJS Documentation</h1>
-                <p>Build interactive, themeable, and performant flowcharts with simple text syntax. Zero dependencies,
-                    pure Vanilla JS.</p>
+        <main class="main-content">
+            <!-- Banner -->
+            <div class="banner">
+                <span class="banner-text">Build interactive flowcharts with simple text syntax</span>
+                <a href="playground.html" class="banner-btn">Try Playground</a>
             </div>
 
-            <!-- Card Grid -->
-            <div id="features" class="grid">
-                <a href="#installation" class="card">
-                    <div class="card-icon">
-                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
-                            viewBox="0 0 24 24">
-                            <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path>
-                        </svg>
-                    </div>
-                    <h3>Installation</h3>
-                    <p>Get up and running in seconds via CDN or npm.</p>
-                </a>
-                <a href="playground.html" class="card">
-                    <div class="card-icon">
-                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
-                            viewBox="0 0 24 24">
-                            <path
-                                d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z">
-                            </path>
-                            <path d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                        </svg>
-                    </div>
-                    <h3>Playground</h3>
-                    <p>Try the library live in your browser.</p>
-                </a>
-                <a href="#config" class="card">
-                    <div class="card-icon">
-                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
-                            viewBox="0 0 24 24">
-                            <path
-                                d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4">
-                            </path>
-                        </svg>
-                    </div>
-                    <h3>Configuration</h3>
-                    <p>Customize themes, layout, and interactivity.</p>
-                </a>
-                <a href="#shapes" class="card">
-                    <div class="card-icon">
-                        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"
-                            viewBox="0 0 24 24">
-                            <path
-                                d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z">
-                            </path>
-                        </svg>
-                    </div>
-                    <h3>Shapes</h3>
-                    <p>Reference guide for all supported node shapes.</p>
-                </a>
-            </div>
+            <!-- About Section -->
+            <section id="about">
+                <h1>About FlowchartJS</h1>
+                <p class="lead">FlowchartJS lets you create interactive diagrams and visualizations using text and code.
+                </p>
 
-            <section id="installation" style="margin-bottom: 60px;">
-                <h2>Installation</h2>
-                <p>Include the CSS and JS files in your project:</p>
-                <pre><code class="html">&lt;link rel="stylesheet" href="dist/flowchart.css"&gt;
+                <p>It is a lightweight JavaScript library that renders <strong>Mermaid-inspired</strong> text
+                    definitions to create flowcharts dynamically. Zero dependencies, pure Vanilla JS.</p>
+
+                <div class="info-block">
+                    <p>If you are familiar with Mermaid syntax, you should have no problem learning <a
+                            href="#syntax">FlowchartJS Syntax</a>.</p>
+                </div>
+
+                <!-- Demo -->
+                <div class="demo-container">
+                    <div class="demo-header">
+                        <span class="demo-dot red"></span>
+                        <span class="demo-dot yellow"></span>
+                        <span class="demo-dot green"></span>
+                    </div>
+                    <div class="demo-preview">
+                        <div id="demo-chart"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Getting Started -->
+            <section id="getting-started">
+                <h2>Getting Started</h2>
+                <p>Include the CSS and JS files in your HTML:</p>
+                <pre><code>&lt;link rel="stylesheet" href="dist/flowchart.css"&gt;
 &lt;script src="dist/flowchart.js"&gt;&lt;/script&gt;</code></pre>
+
+                <p>Create a container and initialize the chart:</p>
+                <pre><code>&lt;div id="my-chart"&gt;&lt;/div&gt;
+
+&lt;script&gt;
+const chart = new FlowChart('my-chart', {
+    theme: 'dark',
+    interactive: true
+});
+
+chart.render(`
+    graph TD
+    A[Start] --> B{Decision}
+    B --> |Yes| C[Action]
+    B --> |No| D[End]
+`);
+&lt;/script&gt;</code></pre>
             </section>
 
-            <section id="basics">
-                <h2>Basic Usage</h2>
-                <p>Initialize the chart and render content:</p>
-                <div style="margin-top: 16px;">
-                    <pre><code>const chart = new FlowChart('my-chart');
-chart.render('graph TD; A[Start] --> B[End];');</code></pre>
-                </div>
+            <!-- Syntax Guide -->
+            <section id="syntax">
+                <h2>Syntax Guide</h2>
+                <p>FlowchartJS uses a simple text-based syntax similar to Mermaid:</p>
+                <pre><code>graph TD
+    A[Node A] --> B[Node B]
+    B --> C{Decision}
+    C --> |Yes| D[Result]
+    C --> |No| E[Alternative]</code></pre>
             </section>
 
-            <section id="config" style="margin-top: 60px;">
-                <h2>Configuration</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Option</th>
-                            <th>Type</th>
-                            <th>Default</th>
-                            <th>Description</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>theme</td>
-                            <td>string</td>
-                            <td>'light'</td>
-                            <td>'light' or 'dark'</td>
-                        </tr>
-                        <tr>
-                            <td>interactive</td>
-                            <td>boolean</td>
-                            <td>true</td>
-                            <td>Enable zoom/pan</td>
-                        </tr>
-                        <tr>
-                            <td>layout</td>
-                            <td>object</td>
-                            <td>...</td>
-                            <td>Layout sizing options</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </section>
-
-            <section id="shapes" style="margin-top: 60px;">
-                <h2>Supported Shapes</h2>
+            <!-- Node Shapes -->
+            <section id="shapes">
+                <h2>Node Shapes</h2>
                 <p>Use different bracket styles to define node shapes:</p>
-                <div class="shape-list">
-                    <span class="shape-tag">[Rect]</span>
-                    <span class="shape-tag">(Round)</span>
-                    <span class="shape-tag">([Stadium])</span>
-                    <span class="shape-tag">[[Subroutine]]</span>
-                    <span class="shape-tag">[(Cylinder)]</span>
-                    <span class="shape-tag">((Circle))</span>
-                    <span class="shape-tag">{Rhombus}</span>
-                    <span class="shape-tag">{{Hexagon}}</span>
-                    <span class="shape-tag">[/Parallelogram/]</span>
-                    <span class="shape-tag">[\Alt Parallelogram\]</span>
-                    <span class="shape-tag">[/Trapezoid\]</span>
-                    <span class="shape-tag">[\Alt Trapezoid/]</span>
+                <div class="tag-container">
+                    <span class="tag">[Rectangle]</span>
+                    <span class="tag">(Round)</span>
+                    <span class="tag">([Stadium])</span>
+                    <span class="tag">[[Subroutine]]</span>
+                    <span class="tag">[(Cylinder)]</span>
+                    <span class="tag">((Circle))</span>
+                    <span class="tag">{Rhombus}</span>
+                    <span class="tag">{{Hexagon}}</span>
+                    <span class="tag">[/Parallelogram/]</span>
+                    <span class="tag">[/Trapezoid\]</span>
                 </div>
             </section>
 
-            <section id="api" style="margin-top: 60px;">
+            <!-- Edge Types -->
+            <section id="edges">
+                <h2>Edge Types</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Syntax</th>
+                                <th>Type</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>--></code></td>
+                                <td>Arrow</td>
+                                <td>Standard arrow connection</td>
+                            </tr>
+                            <tr>
+                                <td><code>---</code></td>
+                                <td>Open</td>
+                                <td>Line without arrow</td>
+                            </tr>
+                            <tr>
+                                <td><code>-.->
+</code></td>
+                                <td>Dotted</td>
+                                <td>Dotted line with arrow</td>
+                            </tr>
+                            <tr>
+                                <td><code>==></code></td>
+                                <td>Thick</td>
+                                <td>Thick arrow</td>
+                            </tr>
+                            <tr>
+                                <td><code>-->|label|</code></td>
+                                <td>Labeled</td>
+                                <td>Arrow with label</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Direction -->
+            <section id="direction">
+                <h2>Direction</h2>
+                <p>Set the flow direction with the graph declaration:</p>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Syntax</th>
+                                <th>Direction</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>graph TD</code></td>
+                                <td>Top to Down</td>
+                            </tr>
+                            <tr>
+                                <td><code>graph LR</code></td>
+                                <td>Left to Right</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Configuration -->
+            <section id="config">
+                <h2>Configuration Options</h2>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Option</th>
+                                <th>Type</th>
+                                <th>Default</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>theme</code></td>
+                                <td>string</td>
+                                <td>'light'</td>
+                                <td>'light' or 'dark'</td>
+                            </tr>
+                            <tr>
+                                <td><code>interactive</code></td>
+                                <td>boolean</td>
+                                <td>true</td>
+                                <td>Enable pan/zoom</td>
+                            </tr>
+                            <tr>
+                                <td><code>layout.nodeWidth</code></td>
+                                <td>number</td>
+                                <td>140</td>
+                                <td>Default node width</td>
+                            </tr>
+                            <tr>
+                                <td><code>layout.nodeHeight</code></td>
+                                <td>number</td>
+                                <td>50</td>
+                                <td>Default node height</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Themes -->
+            <section id="themes">
+                <h2>Themes</h2>
+                <p>FlowchartJS supports light and dark themes:</p>
+                <pre><code>// Initialize with dark theme
+const chart = new FlowChart('chart', { theme: 'dark' });
+
+// Switch theme dynamically
+chart.setTheme('light');</code></pre>
+            </section>
+
+            <!-- API Methods -->
+            <section id="api">
                 <h2>API Methods</h2>
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Method</th>
-                            <th>Description</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td><code>render(input: string)</code></td>
-                            <td>Renders the chart from the given mermaid text input.</td>
-                        </tr>
-                        <tr>
-                            <td><code>setTheme(theme: string)</code></td>
-                            <td>Switches the theme dynamically ('light' or 'dark').</td>
-                        </tr>
-                        <tr>
-                            <td><code>exportImage()</code></td>
-                            <td>Exports the current view as a PNG image.</td>
-                        </tr>
-                    </tbody>
-                </table>
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Method</th>
+                                <th>Description</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><code>render(input)</code></td>
+                                <td>Renders the chart from text input</td>
+                            </tr>
+                            <tr>
+                                <td><code>setTheme(theme)</code></td>
+                                <td>Switches between 'light' and 'dark'</td>
+                            </tr>
+                            <tr>
+                                <td><code>exportImage()</code></td>
+                                <td>Downloads as PNG</td>
+                            </tr>
+                            <tr>
+                                <td><code>exportSVG()</code></td>
+                                <td>Downloads as SVG</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- Export PNG -->
+            <section id="export-png">
+                <h2>Export PNG</h2>
+                <p>Export the current chart as a PNG image:</p>
+                <pre><code>chart.exportImage();</code></pre>
+            </section>
+
+            <!-- Export SVG -->
+            <section id="export-svg">
+                <h2>Export SVG</h2>
+                <p>Export the current chart as an SVG file:</p>
+                <pre><code>chart.exportSVG();</code></pre>
             </section>
         </main>
+
+        <!-- Right Sidebar - Table of Contents -->
+        <aside class="toc">
+            <div class="toc-title">On this page</div>
+            <a href="#about" class="toc-link">About FlowchartJS</a>
+            <a href="#getting-started" class="toc-link">Getting Started</a>
+            <a href="#syntax" class="toc-link">Syntax Guide</a>
+            <a href="#shapes" class="toc-link">Node Shapes</a>
+            <a href="#edges" class="toc-link">Edge Types</a>
+            <a href="#direction" class="toc-link">Direction</a>
+            <a href="#config" class="toc-link">Configuration</a>
+            <a href="#themes" class="toc-link">Themes</a>
+            <a href="#api" class="toc-link">API Methods</a>
+            <a href="#export-png" class="toc-link">Export PNG</a>
+            <a href="#export-svg" class="toc-link">Export SVG</a>
+        </aside>
     </div>
+
+    <script src="../dist/flowchart.js"></script>
+    <script>
+        // Toggle sidebar for mobile
+        function toggleSidebar() {
+            document.getElementById('sidebar').classList.toggle('open');
+            document.querySelector('.overlay').classList.toggle('active');
+        }
+
+        // Toggle sidebar sections
+        function toggleSection(header) {
+            header.classList.toggle('collapsed');
+            header.nextElementSibling.classList.toggle('hidden');
+        }
+
+        // Initialize demo chart
+        const demoChart = new FlowChart('demo-chart', {
+            theme: 'dark',
+            interactive: true
+        });
+
+        demoChart.render(`graph TD
+    A[Start] --> B{Is it working?}
+    B --> |Yes| C[Great!]
+    B --> |No| D[Debug]
+    D --> E((Check Logs))
+    E --> F[/Found Error?/]
+    F --> |Yes| G[Fix It]
+    F --> |No| H[(Database)]
+    G --> B
+    C --> I([End])`);
+
+        // Highlight active TOC link on scroll
+        const sections = document.querySelectorAll('section[id]');
+        const tocLinks = document.querySelectorAll('.toc-link');
+
+        window.addEventListener('scroll', () => {
+            let current = '';
+            sections.forEach(section => {
+                const sectionTop = section.offsetTop;
+                if (scrollY >= sectionTop - 100) {
+                    current = section.getAttribute('id');
+                }
+            });
+
+            tocLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === '#' + current) {
+                    link.classList.add('active');
+                }
+            });
+        });
+    </script>
 </body>
 
 </html>
