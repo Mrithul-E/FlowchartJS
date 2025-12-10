@@ -110,14 +110,36 @@ class FlowChart {
 
     zoomIn() {
         if (this.transform) {
-            this.transform.scale = Math.min(this.transform.scale * 1.2, 3);
+            const oldScale = this.transform.scale;
+            const newScale = Math.min(oldScale * 1.2, 3);
+
+            // Zoom relative to viewport center
+            const viewportCenterX = this.container.clientWidth / 2;
+            const viewportCenterY = this.container.clientHeight / 2;
+
+            // Adjust position to keep viewport center in place
+            this.transform.x = viewportCenterX - (viewportCenterX - this.transform.x) * (newScale / oldScale);
+            this.transform.y = viewportCenterY - (viewportCenterY - this.transform.y) * (newScale / oldScale);
+            this.transform.scale = newScale;
+
             this.updateTransform(this.transform);
         }
     }
 
     zoomOut() {
         if (this.transform) {
-            this.transform.scale = Math.max(this.transform.scale / 1.2, 0.3);
+            const oldScale = this.transform.scale;
+            const newScale = Math.max(oldScale / 1.2, 0.3);
+
+            // Zoom relative to viewport center
+            const viewportCenterX = this.container.clientWidth / 2;
+            const viewportCenterY = this.container.clientHeight / 2;
+
+            // Adjust position to keep viewport center in place
+            this.transform.x = viewportCenterX - (viewportCenterX - this.transform.x) * (newScale / oldScale);
+            this.transform.y = viewportCenterY - (viewportCenterY - this.transform.y) * (newScale / oldScale);
+            this.transform.scale = newScale;
+
             this.updateTransform(this.transform);
         }
     }

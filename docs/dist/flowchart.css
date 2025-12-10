@@ -188,4 +188,5 @@
 .flowchart-zoom-btn:hover {
     background: var(--hover-fill);
     border-color: var(--hover-stroke);
+    color: #111111;
 }
