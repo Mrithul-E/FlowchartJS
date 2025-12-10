@@ -164,17 +164,19 @@ class FlowChart {
                 isPanning = true;
                 startX = e.touches[0].clientX - transform.x;
                 startY = e.touches[0].clientY - transform.y;
+                e.preventDefault(); // Prevent page scroll
             }
-        }, { passive: true });
+        }, { passive: false });
 
-        window.addEventListener('touchmove', (e) => {
+        this.svg.addEventListener('touchmove', (e) => {
             if (!isPanning || e.touches.length !== 1) return;
+            e.preventDefault(); // Prevent page scroll while panning
             transform.x = e.touches[0].clientX - startX;
             transform.y = e.touches[0].clientY - startY;
             this.updateTransform(transform);
-        }, { passive: true });
+        }, { passive: false });
 
-        window.addEventListener('touchend', () => {
+        this.svg.addEventListener('touchend', () => {
             isPanning = false;
         });
 
