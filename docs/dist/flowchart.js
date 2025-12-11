@@ -19,7 +19,18 @@ class FlowChart {
             }
         }, config);
 
-        this.data = { nodes: {}, edges: [], direction: 'TD' };
+        this.data = {
+            nodes: {},
+            edges: [],
+            direction: 'TD',
+            // Styling data
+            linkStyles: {},      // { index: { stroke: '#fff', strokeWidth: '4px' } }
+            defaultLinkStyle: null,  // Default style for all links
+            classDefs: {},       // { className: { fill: '#f9f', stroke: '#333' } }
+            nodeStyles: {},      // { nodeId: { fill: '#f9f', stroke: '#333' } }
+            nodeClasses: {},     // { nodeId: 'className' }
+            defaultCurve: 'bezier'  // Default curve type
+        };
         this.root = null;
 
         // Use config for dimensions
@@ -270,11 +281,58 @@ class FlowChart {
         const nodes = {};
         const edges = [];
         let direction = 'TD';
+
+        // Styling data structures
+        const linkStyles = {};
+        let defaultLinkStyle = null;
+        const classDefs = {};
+        const nodeStyles = {};
+        const nodeClasses = {};
+        let defaultCurve = 'bezier';
+
         const lines = input.split('\n');
 
-        lines.forEach(line => {
+        // First pass: parse frontmatter for config
+        let inFrontmatter = false;
+        let frontmatterLines = [];
+        let contentStartIndex = 0;
+
+        for (let i = 0; i < lines.length; i++) {
+            const line = lines[i].trim();
+            if (i === 0 && line === '---') {
+                inFrontmatter = true;
+                continue;
+            }
+            if (inFrontmatter) {
+                if (line === '---') {
+                    inFrontmatter = false;
+                    contentStartIndex = i + 1;
+                    break;
+                }
+                frontmatterLines.push(line);
+            }
+        }
+
+        // Parse frontmatter for curve config
+        const frontmatterText = frontmatterLines.join('\n');
+        const curveMatch = frontmatterText.match(/curve:\s*(\w+)/);
+        if (curveMatch) {
+            defaultCurve = curveMatch[1];
+        }
+
+        // Second pass: parse graph content
+        const contentLines = contentStartIndex > 0 ? lines.slice(contentStartIndex) : lines;
+
+        contentLines.forEach(line => {
             line = line.trim();
             if (!line || line.startsWith('%%')) return;
+
+            // Handle direction declaration
+            const directionOnlyMatch = line.match(/^(TD|TB|BT|LR|RL)$/i);
+            if (directionOnlyMatch) {
+                direction = directionOnlyMatch[1].toUpperCase();
+                return;
+            }
 
             if (line.match(/^(graph|flowchart)\s+(TD|TB|BT|LR|RL)/i)) {
                 const match = line.match(/^(graph|flowchart)\s+(TD|TB|BT|LR|RL)/i);
@@ -282,11 +340,77 @@ class FlowChart {
                 return;
             }
 
+            // Parse linkStyle: linkStyle 0 stroke:#ff0,stroke-width:4px
+            // Also: linkStyle 0,1,2 stroke:#ff0 or linkStyle default stroke:#444
+            const linkStyleMatch = line.match(/^linkStyle\s+(.+?)\s+(.+)$/i);
+            if (linkStyleMatch) {
+                const indices = linkStyleMatch[1].trim();
+                const styleStr = linkStyleMatch[2].trim();
+                const parsedStyle = this.parseStyleString(styleStr);
+
+                if (indices.toLowerCase() === 'default') {
+                    defaultLinkStyle = parsedStyle;
+                } else {
+                    // Handle comma-separated indices
+                    const indexList = indices.split(',').map(s => parseInt(s.trim(), 10));
+                    indexList.forEach(idx => {
+                        if (!isNaN(idx)) {
+                            linkStyles[idx] = parsedStyle;
+                        }
+                    });
+                }
+                return;
+            }
+
+            // Parse style: style nodeId fill:#f9f,stroke:#333
+            const styleMatch = line.match(/^style\s+(\S+)\s+(.+)$/i);
+            if (styleMatch) {
+                const nodeId = styleMatch[1].trim();
+                const styleStr = styleMatch[2].trim();
+                nodeStyles[nodeId] = this.parseStyleString(styleStr);
+                return;
+            }
+
+            // Parse classDef: classDef className fill:#f9f,stroke:#333
+            // Also: classDef class1,class2 fill:#f9f
+            const classDefMatch = line.match(/^classDef\s+(\S+)\s+(.+)$/i);
+            if (classDefMatch) {
+                const classNames = classDefMatch[1].trim();
+                const styleStr = classDefMatch[2].trim();
+                const parsedStyle = this.parseStyleString(styleStr);
+
+                // Handle comma-separated class names
+                classNames.split(',').forEach(className => {
+                    className = className.trim();
+                    if (className) {
+                        classDefs[className] = parsedStyle;
+                    }
+                });
+                return;
+            }
+
+            // Parse class: class nodeId className
+            // Also: class nodeId1,nodeId2 className
+            const classMatch = line.match(/^class\s+(\S+)\s+(\S+)$/i);
+            if (classMatch) {
+                const nodeIds = classMatch[1].trim();
+                const className = classMatch[2].trim();
+
+                nodeIds.split(',').forEach(nodeId => {
+                    nodeId = nodeId.trim();
+                    if (nodeId) {
+                        nodeClasses[nodeId] = className;
+                    }
+                });
+                return;
+            }
+
+            // Parse edge definitions
             const edgeRegex = /\s*(-{2,}>|-{3}|-\.-+>|={2,}>)\s*/;
             const parts = line.split(edgeRegex);
 
             if (parts.length >= 3) {
-                let sourceNode = this.parseNodeString(parts[0]);
+                let sourceNode = this.parseNodeString(parts[0], nodeClasses);
                 if (!nodes[sourceNode.id]) nodes[sourceNode.id] = sourceNode;
                 else this.mergeNodeInfo(nodes[sourceNode.id], sourceNode);
 
@@ -301,12 +425,12 @@ class FlowChart {
                         cleanTargetStr = labelMatch[2];
                     }
 
-                    const targetNode = this.parseNodeString(cleanTargetStr);
+                    const targetNode = this.parseNodeString(cleanTargetStr, nodeClasses);
                     if (!nodes[targetNode.id]) nodes[targetNode.id] = targetNode;
                     else this.mergeNodeInfo(nodes[targetNode.id], targetNode);
 
                     let type = 'arrow';
-                    if (op.includes('-.->')) type = 'dotted';
+                    if (op.includes('-.-')) type = 'dotted';
                     else if (op.includes('==>')) type = 'thick';
                     else if (op.includes('---')) type = 'open';
 
@@ -321,7 +445,7 @@ class FlowChart {
                     sourceNode = targetNode;
                 }
             } else {
-                const node = this.parseNodeString(line);
+                const node = this.parseNodeString(line, nodeClasses);
                 if (!nodes[node.id]) nodes[node.id] = node;
                 else this.mergeNodeInfo(nodes[node.id], node);
             }
@@ -333,19 +457,98 @@ class FlowChart {
         }
         this.root = roots.length > 0 ? roots[0] : null;
 
-        return { nodes, edges, direction };
+        return {
+            nodes,
+            edges,
+            direction,
+            linkStyles,
+            defaultLinkStyle,
+            classDefs,
+            nodeStyles,
+            nodeClasses,
+            defaultCurve
+        };
+    }
+
+    // Parse CSS-like style string into an object
+    parseStyleString(styleStr) {
+        const styles = {};
+        // Split by comma but not inside parentheses (for things like stroke-dasharray: 5 5)
+        const parts = styleStr.split(/,(?![^(]*\))/);
+        parts.forEach(part => {
+            const colonIndex = part.indexOf(':');
+            if (colonIndex > -1) {
+                const key = part.substring(0, colonIndex).trim();
+                const value = part.substring(colonIndex + 1).trim();
+                // Convert CSS property names to camelCase for easier use
+                const camelKey = key.replace(/-([a-z])/g, (g) => g[1].toUpperCase());
+                styles[camelKey] = value;
+                // Also keep original key for direct SVG attribute setting
+                styles[key] = value;
+            }
+        });
+        return styles;
     }
 
     mergeNodeInfo(existing, parsed) {
         if (parsed.label && parsed.label !== parsed.id) existing.label = parsed.label;
         if (parsed.shape !== 'rect') existing.shape = parsed.shape;
+        if (parsed.className) existing.className = parsed.className;
     }
 
-    parseNodeString(str) {
+    // Get computed style for a node, merging default, class, and inline styles
+    getNodeStyle(nodeId) {
+        let style = {};
+
+        // Apply default class if exists
+        if (this.data.classDefs && this.data.classDefs['default']) {
+            style = { ...style, ...this.data.classDefs['default'] };
+        }
+
+        // Apply class style if node has a class assigned
+        const className = this.data.nodeClasses && this.data.nodeClasses[nodeId];
+        if (className && this.data.classDefs && this.data.classDefs[className]) {
+            style = { ...style, ...this.data.classDefs[className] };
+        }
+
+        // Apply inline node style (highest priority)
+        if (this.data.nodeStyles && this.data.nodeStyles[nodeId]) {
+            style = { ...style, ...this.data.nodeStyles[nodeId] };
+        }
+
+        return Object.keys(style).length > 0 ? style : null;
+    }
+
+    // Get computed style for a link by index
+    getLinkStyle(edgeIndex) {
+        let style = {};
+
+        // Apply default link style if exists
+        if (this.data.defaultLinkStyle) {
+            style = { ...style, ...this.data.defaultLinkStyle };
+        }
+
+        // Apply specific link style (higher priority)
+        if (this.data.linkStyles && this.data.linkStyles[edgeIndex]) {
+            style = { ...style, ...this.data.linkStyles[edgeIndex] };
+        }
+
+        return Object.keys(style).length > 0 ? style : null;
+    }
+
+    parseNodeString(str, nodeClasses = {}) {
         str = str.trim();
         let id = str;
         let label = str;
         let shape = 'rect';
+        let className = null;
+
+        // Handle ::: operator for inline class assignment (e.g., A:::className)
+        const classMatch = str.match(/^(.+?):::(\w+)$/);
+        if (classMatch) {
+            str = classMatch[1].trim();
+            className = classMatch[2];
+        }
 
         const shapes = [
             { regex: /^([^\s\[]+)\[\[(.+)\]\]$/, type: 'subroutine' },
@@ -372,8 +575,20 @@ class FlowChart {
             }
         }
 
+        // If no shape matched, id is the whole string (plain node)
+        if (id === str && label === str) {
+            // Check for ::: in plain node (already extracted above)
+            id = str;
+            label = str;
+        }
+
+        // Store class assignment if found via ::: operator
+        if (className && nodeClasses) {
+            nodeClasses[id] = className;
+        }
+
         return {
-            id, label, shape, collapsed: false, x: 0, y: 0, children: [], parents: [], visible: false
+            id, label, shape, className, collapsed: false, x: 0, y: 0, children: [], parents: [], visible: false
         };
     }
 
@@ -440,14 +655,14 @@ class FlowChart {
         const currentNodes = new Set();
         const currentEdges = new Set();
 
-        this.data.edges.forEach(edge => {
+        this.data.edges.forEach((edge, edgeIndex) => {
             const source = this.data.nodes[edge.from];
             const target = this.data.nodes[edge.to];
 
             if (source.visible && target.visible) {
                 const edgeId = `edge-${edge.from}-${edge.to}`;
                 currentEdges.add(edgeId);
-                this.drawEdge(edge, source, target, edgeId);
+                this.drawEdge(edge, source, target, edgeId, edgeIndex);
             }
         });
 
@@ -510,6 +725,24 @@ class FlowChart {
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttribute('d', shapePath);
         path.setAttribute('class', 'node-shape');
+
+        // Apply custom styles to node
+        const nodeStyle = this.getNodeStyle(node.id);
+        if (nodeStyle) {
+            // Apply fill
+            if (nodeStyle.fill) path.style.fill = nodeStyle.fill;
+            // Apply stroke
+            if (nodeStyle.stroke) path.style.stroke = nodeStyle.stroke;
+            // Apply stroke-width
+            if (nodeStyle['stroke-width'] || nodeStyle.strokeWidth) {
+                path.style.strokeWidth = nodeStyle['stroke-width'] || nodeStyle.strokeWidth;
+            }
+            // Apply stroke-dasharray
+            if (nodeStyle['stroke-dasharray'] || nodeStyle.strokeDasharray) {
+                path.style.strokeDasharray = nodeStyle['stroke-dasharray'] || nodeStyle.strokeDasharray;
+            }
+        }
+
         group.appendChild(path);
 
         const isHorizontal = this.data.direction === 'LR' || this.data.direction === 'RL';
@@ -543,6 +776,11 @@ class FlowChart {
         const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
         text.setAttribute('text-anchor', 'middle');
         text.setAttribute('class', 'node-text');
+
+        // Apply text color from node style if specified
+        if (nodeStyle && nodeStyle.color) {
+            text.style.fill = nodeStyle.color;
+        }
 
         const lines = node.lines || [node.label];
         if (lines.length === 1) {
@@ -611,7 +849,7 @@ class FlowChart {
         }
     }
 
-    drawEdge(edge, source, target, id) {
+    drawEdge(edge, source, target, id, edgeIndex) {
         let group = this.g.querySelector(`g[data-id="${id}"]`);
         const isNew = !group;
 
@@ -663,6 +901,18 @@ class FlowChart {
         if (edge.type === 'dotted') path.setAttribute('stroke-dasharray', '5,5');
         if (edge.type === 'thick') path.setAttribute('stroke-width', '4');
         if (edge.type !== 'open') path.setAttribute('marker-end', 'url(#arrowhead)');
+
+        // Apply custom link styles from linkStyle directive
+        const linkStyle = this.getLinkStyle(edgeIndex);
+        if (linkStyle) {
+            if (linkStyle.stroke) path.style.stroke = linkStyle.stroke;
+            if (linkStyle['stroke-width'] || linkStyle.strokeWidth) {
+                path.style.strokeWidth = linkStyle['stroke-width'] || linkStyle.strokeWidth;
+            }
+            if (linkStyle['stroke-dasharray'] || linkStyle.strokeDasharray) {
+                path.style.strokeDasharray = linkStyle['stroke-dasharray'] || linkStyle.strokeDasharray;
+            }
+        }
 
         group.appendChild(path);
 
