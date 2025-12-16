@@ -604,6 +604,7 @@
                     <a href="#shapes" class="sidebar-link">Node Shapes</a>
                     <a href="#edges" class="sidebar-link">Edge Types</a>
                     <a href="#direction" class="sidebar-link">Direction</a>
+                    <a href="#styling" class="sidebar-link">Styling & Classes</a>
                 </div>
             </div>
 
@@ -796,6 +797,38 @@ chart.render(`
                     </table>
                 </div>
             </section>
+
+            <!-- Styling & Classes -->
+            <section id="styling">
+                <h2>Styling & Classes</h2>
+                <p>Customize the look of nodes and edges using standard styling directives.</p>
+
+                <h3>Link Styling</h3>
+                <p>Style individual or multiple links using <code>linkStyle</code>. Supports standard SVG stroke
+                    properties and curve type.</p>
+                <pre><code>graph TD
+    A[Start] --> B[Step]
+    B --> C[Linear]
+    linkStyle 0 stroke:#ff0000,stroke-width:4px,curve:step
+    linkStyle 1 stroke:blue,curve:linear</code></pre>
+                <p>Supported curve types: <code>bezier</code> (default), <code>linear</code>, <code>step</code>,
+                    <code>stepAfter</code>, <code>stepBefore</code>.</p>
+
+                <h3>Node Styling</h3>
+                <p>Apply inline styles to specific nodes using <code>style</code>:</p>
+                <pre><code>style id1 fill:#f9f,stroke:#333,stroke-width:4px,color:#fff</code></pre>
+
+                <h3>Classes</h3>
+                <p>Define reusable classes with <code>classDef</code> and apply them using <code>class</code> or the
+                    <code>:::</code> shorthand.</p>
+                <pre><code>classDef error fill:#ff0000,color:#fff
+classDef success fill:#00ff00,color:#000
+
+A:::error --> B:::success
+class A error
+class B success</code></pre>
+            </section>
+
 
             <!-- Configuration -->
             <section id="config">

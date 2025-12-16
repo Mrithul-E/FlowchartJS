@@ -538,9 +538,6 @@ class FlowChart {
 
     parseNodeString(str, nodeClasses = {}) {
         str = str.trim();
-        let id = str;
-        let label = str;
-        let shape = 'rect';
         let className = null;
 
         // Handle ::: operator for inline class assignment (e.g., A:::className)
@@ -549,6 +546,10 @@ class FlowChart {
             str = classMatch[1].trim();
             className = classMatch[2];
         }
+
+        let id = str;
+        let label = str;
+        let shape = 'rect';
 
         const shapes = [
             { regex: /^([^\s\[]+)\[\[(.+)\]\]$/, type: 'subroutine' },
@@ -698,6 +699,7 @@ class FlowChart {
         if (isNew) {
             group = document.createElementNS('http://www.w3.org/2000/svg', 'g');
             group.setAttribute('data-id', id);
+            // Initial class
             group.setAttribute('class', 'node-group');
             group.style.opacity = '0';
             group.setAttribute('transform', `translate(${node.x}, ${node.y})`);
@@ -718,6 +720,13 @@ class FlowChart {
         } else {
             group.style.transform = `translate(${node.x}px, ${node.y}px)`;
         }
+
+        // Update class list to include custom classes from classDef/:::
+        let classList = ['node-group'];
+        if (this.data.nodeClasses && this.data.nodeClasses[node.id]) {
+            classList.push(this.data.nodeClasses[node.id]);
+        }
+        group.setAttribute('class', classList.join(' '));
 
         group.innerHTML = '';
 
@@ -849,6 +858,58 @@ class FlowChart {
         }
     }
 
+    getCurvePath(x1, y1, x2, y2, type = 'bezier', direction = 'TD') {
+        type = (type || 'bezier').toLowerCase();
+
+        if (type === 'linear') {
+            return `M ${x1} ${y1} L ${x2} ${y2}`;
+        }
+
+        const isHorizontal = direction === 'LR' || direction === 'RL';
+
+        if (type.includes('step')) {
+            if (type === 'stepafter') {
+                if (isHorizontal) {
+                    return `M ${x1} ${y1} L ${x2} ${y1} L ${x2} ${y2}`;
+                } else {
+                    return `M ${x1} ${y1} L ${x1} ${y2} L ${x2} ${y2}`;
+                }
+            }
+
+            if (type === 'stepbefore') {
+                if (isHorizontal) {
+                    return `M ${x1} ${y1} L ${x1} ${y2} L ${x2} ${y2}`;
+                } else {
+                    return `M ${x1} ${y1} L ${x2} ${y1} L ${x2} ${y2}`;
+                }
+            }
+
+            // Default step (midpoint)
+            if (isHorizontal) {
+                const mx = (x1 + x2) / 2;
+                return `M ${x1} ${y1} L ${mx} ${y1} L ${mx} ${y2} L ${x2} ${y2}`;
+            } else {
+                const my = (y1 + y2) / 2;
+                return `M ${x1} ${y1} L ${x1} ${my} L ${x2} ${my} L ${x2} ${y2}`;
+            }
+        }
+
+        // Default / Bezier / Basis / Natural / Monotone
+        if (isHorizontal) {
+            const c1x = x1 + (x2 - x1) / 2;
+            const c1y = y1;
+            const c2x = x2 - (x2 - x1) / 2;
+            const c2y = y2;
+            return `M ${x1} ${y1} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${x2} ${y2}`;
+        } else {
+            const c1x = x1;
+            const c1y = y1 + (y2 - y1) / 2;
+            const c2x = x2;
+            const c2y = y2 - (y2 - y1) / 2;
+            return `M ${x1} ${y1} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${x2} ${y2}`;
+        }
+    }
+
     drawEdge(edge, source, target, id, edgeIndex) {
         let group = this.g.querySelector(`g[data-id="${id}"]`);
         const isNew = !group;
@@ -880,20 +941,14 @@ class FlowChart {
             y2 = target.y - this.nodeHeight / 2;
         }
 
-        let d;
-        if (isHorizontal) {
-            const c1x = x1 + (x2 - x1) / 2;
-            const c1y = y1;
-            const c2x = x2 - (x2 - x1) / 2;
-            const c2y = y2;
-            d = `M ${x1} ${y1} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${x2} ${y2}`;
-        } else {
-            const c1x = x1;
-            const c1y = y1 + (y2 - y1) / 2;
-            const c2x = x2;
-            const c2y = y2 - (y2 - y1) / 2;
-            d = `M ${x1} ${y1} C ${c1x} ${c1y}, ${c2x} ${c2y}, ${x2} ${y2}`;
+        // Determine curve type: linkStyle specific > defaultCurve > bezier
+        let curveType = this.data.defaultCurve || 'bezier';
+        const linkStyle = this.getLinkStyle(edgeIndex);
+        if (linkStyle && linkStyle.curve) {
+            curveType = linkStyle.curve;
         }
+
+        const d = this.getCurvePath(x1, y1, x2, y2, curveType, this.data.direction);
 
         path.setAttribute('d', d);
         path.setAttribute('class', 'edge-path');
@@ -903,7 +958,6 @@ class FlowChart {
         if (edge.type !== 'open') path.setAttribute('marker-end', 'url(#arrowhead)');
 
         // Apply custom link styles from linkStyle directive
-        const linkStyle = this.getLinkStyle(edgeIndex);
         if (linkStyle) {
             if (linkStyle.stroke) path.style.stroke = linkStyle.stroke;
             if (linkStyle['stroke-width'] || linkStyle.strokeWidth) {

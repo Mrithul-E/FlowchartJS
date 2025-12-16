@@ -9,6 +9,7 @@ A lightweight, themeable, and interactive flowchart library for the modern web. 
 - **Theming**: Built-in Light and Dark modes with high contract readability.
 - **High Performance**: SVG-based rendering with smooth animations.
 - **Interactive**: Collapsible branches and zoom/pan support.
+- **Advanced Styling**: Rich support for link styles, node classes, and curve types.
 - **Zero Dependencies**: Pure Vanilla JS and CSS.
 
 ## Installation
@@ -57,6 +58,11 @@ Download the files from the `docs/dist/` folder and include them in your project
      Decision -->|Yes| End[Done]
      Decision -->|No| Retry[Try Again]
      Retry --> Decision
+
+     style Start fill:#f9f,stroke:#333,stroke-width:2px
+     classDef action fill:#00bf7d,color:#fff,stroke:#004d32
+     class End action
+     linkStyle default stroke-width:2px,curve:bezier
    `);
    ```
 

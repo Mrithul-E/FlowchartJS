@@ -90,7 +90,7 @@
 
 .node-text {
     font-size: 14px;
-    fill: var(--node-text) !important;
+    fill: var(--node-text);
     pointer-events: none;
     user-select: none;
     transition: fill 0.3s ease;
