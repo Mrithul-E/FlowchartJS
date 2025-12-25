@@ -166,8 +166,30 @@ class FlowChart {
 
     setupInteractions() {
         let isPanning = false;
+        let isPinching = false;
         let startX = 0, startY = 0;
         let transform = { x: 0, y: 0, scale: 1 };
+
+        // Pinch zoom variables
+        let initialPinchDistance = 0;
+        let initialScale = 1;
+        let pinchCenterX = 0;
+        let pinchCenterY = 0;
+
+        // Helper function to get distance between two touch points
+        const getTouchDistance = (touch1, touch2) => {
+            const dx = touch1.clientX - touch2.clientX;
+            const dy = touch1.clientY - touch2.clientY;
+            return Math.sqrt(dx * dx + dy * dy);
+        };
+
+        // Helper function to get center point between two touches
+        const getTouchCenter = (touch1, touch2) => {
+            return {
+                x: (touch1.clientX + touch2.clientX) / 2,
+                y: (touch1.clientY + touch2.clientY) / 2
+            };
+        };
 
         // Mouse events for desktop
         this.svg.addEventListener('mousedown', (e) => {
@@ -190,27 +212,89 @@ class FlowChart {
             this.svg.style.cursor = 'default';
         });
 
-        // Touch events for mobile
+        // Mouse wheel zoom for desktop
+        this.svg.addEventListener('wheel', (e) => {
+            e.preventDefault();
+
+            const rect = this.container.getBoundingClientRect();
+            const mouseX = e.clientX - rect.left;
+            const mouseY = e.clientY - rect.top;
+
+            const oldScale = transform.scale;
+            const delta = e.deltaY > 0 ? 0.9 : 1.1;
+            const newScale = Math.max(0.3, Math.min(3, oldScale * delta));
+
+            // Zoom towards mouse position
+            transform.x = mouseX - (mouseX - transform.x) * (newScale / oldScale);
+            transform.y = mouseY - (mouseY - transform.y) * (newScale / oldScale);
+            transform.scale = newScale;
+
+            this.updateTransform(transform);
+        }, { passive: false });
+
+        // Touch events for mobile (pan + pinch zoom)
         this.svg.addEventListener('touchstart', (e) => {
             if (e.target.closest('.node-group')) return;
+
             if (e.touches.length === 1) {
+                // Single touch - panning
                 isPanning = true;
+                isPinching = false;
                 startX = e.touches[0].clientX - transform.x;
                 startY = e.touches[0].clientY - transform.y;
-                e.preventDefault(); // Prevent page scroll
+                e.preventDefault();
+            } else if (e.touches.length === 2) {
+                // Two fingers - pinch zoom
+                isPanning = false;
+                isPinching = true;
+                initialPinchDistance = getTouchDistance(e.touches[0], e.touches[1]);
+                initialScale = transform.scale;
+
+                const center = getTouchCenter(e.touches[0], e.touches[1]);
+                const rect = this.container.getBoundingClientRect();
+                pinchCenterX = center.x - rect.left;
+                pinchCenterY = center.y - rect.top;
+
+                e.preventDefault();
             }
         }, { passive: false });
 
         this.svg.addEventListener('touchmove', (e) => {
-            if (!isPanning || e.touches.length !== 1) return;
-            e.preventDefault(); // Prevent page scroll while panning
-            transform.x = e.touches[0].clientX - startX;
-            transform.y = e.touches[0].clientY - startY;
-            this.updateTransform(transform);
+            if (isPanning && e.touches.length === 1) {
+                // Single touch panning
+                e.preventDefault();
+                transform.x = e.touches[0].clientX - startX;
+                transform.y = e.touches[0].clientY - startY;
+                this.updateTransform(transform);
+            } else if (isPinching && e.touches.length === 2) {
+                // Pinch zooming
+                e.preventDefault();
+
+                const currentDistance = getTouchDistance(e.touches[0], e.touches[1]);
+                const scaleRatio = currentDistance / initialPinchDistance;
+                const newScale = Math.max(0.3, Math.min(3, initialScale * scaleRatio));
+
+                // Calculate new position to zoom towards pinch center
+                const oldScale = transform.scale;
+                transform.x = pinchCenterX - (pinchCenterX - transform.x) * (newScale / oldScale);
+                transform.y = pinchCenterY - (pinchCenterY - transform.y) * (newScale / oldScale);
+                transform.scale = newScale;
+
+                this.updateTransform(transform);
+            }
         }, { passive: false });
 
-        this.svg.addEventListener('touchend', () => {
-            isPanning = false;
+        this.svg.addEventListener('touchend', (e) => {
+            if (e.touches.length === 0) {
+                isPanning = false;
+                isPinching = false;
+            } else if (e.touches.length === 1) {
+                // Transitioned from pinch to pan
+                isPinching = false;
+                isPanning = true;
+                startX = e.touches[0].clientX - transform.x;
+                startY = e.touches[0].clientY - transform.y;
+            }
         });
 
         // Center initially
@@ -228,39 +312,73 @@ class FlowChart {
         let maxW = this.config.layout.nodeWidth;
         let maxH = this.config.layout.nodeHeight;
 
-        const charWidth = 8;
-        const lineHeight = 20;
-        const padding = 20;
-        const maxCharsPerLine = 20;
+        const charWidth = 10;
+        const lineHeight = 22;
+        const padding = 24;
+        const maxCharsPerLine = 25;
 
         Object.values(this.data.nodes).forEach(node => {
-            const words = node.label.split(' ');
-            let lines = [];
-            let currentLine = words[0];
+            // Normalize the label:
+            // 1. Replace actual newlines (from multiline source) with spaces
+            // 2. Collapse multiple spaces into one
+            // 3. Then replace <br> tags with a unique separator for splitting
+            let normalizedLabel = node.label
+                .replace(/[\r\n]+/g, ' ')           // Replace newlines with space
+                .replace(/\s+/g, ' ')                // Collapse multiple spaces
+                .trim();
 
-            for (let i = 1; i < words.length; i++) {
-                if (currentLine.length + 1 + words[i].length <= maxCharsPerLine) {
-                    currentLine += ' ' + words[i];
-                } else {
-                    lines.push(currentLine);
-                    currentLine = words[i];
+            // Now split by <br> tags
+            const preLines = normalizedLabel
+                .split(/<br\s*\/?>/gi)
+                .map(l => l.trim())
+                .filter(l => l.length > 0);
+
+            let lines = [];
+
+            preLines.forEach(preLine => {
+                const words = preLine.split(' ').filter(w => w.length > 0);
+                if (words.length === 0) return;
+
+                let currentLine = words[0];
+
+                for (let i = 1; i < words.length; i++) {
+                    // Get visible text length (without HTML tags)
+                    const lineText = currentLine.replace(/<[^>]*>/g, '');
+                    const wordText = words[i].replace(/<[^>]*>/g, '');
+
+                    if (lineText.length + 1 + wordText.length <= maxCharsPerLine) {
+                        currentLine += ' ' + words[i];
+                    } else {
+                        lines.push(currentLine);
+                        currentLine = words[i];
+                    }
                 }
+                lines.push(currentLine);
+            });
+
+            // Ensure at least one line
+            if (lines.length === 0) {
+                lines = [node.label];
             }
-            lines.push(currentLine);
+
             node.lines = lines;
 
-            const longestLineChars = Math.max(...lines.map(l => l.length));
-            const w = longestLineChars * charWidth + padding * 2;
-            const h = lines.length * lineHeight + padding * 2;
+            // Calculate dimensions based on visible text (without HTML tags)
+            const longestLineChars = Math.max(...lines.map(l => l.replace(/<[^>]*>/g, '').length));
+            const w = Math.max(longestLineChars * charWidth + padding * 2, 80); // Min width 80
+            const h = Math.max(lines.length * lineHeight + padding * 2, 50);    // Min height 50
+
+            node.width = w;
+            node.height = h;
 
             if (w > maxW) maxW = w;
             if (h > maxH) maxH = h;
         });
 
-        this.nodeWidth = maxW;
-        this.nodeHeight = maxH;
-        this.levelSeparation = this.nodeHeight + 60;
-        this.siblingSeparation = this.nodeWidth + 40;
+        this.maxNodeWidth = maxW;
+        this.maxNodeHeight = maxH;
+        this.levelSeparation = this.maxNodeHeight + 60;
+        this.siblingSeparation = this.maxNodeWidth + 40;
     }
 
     render(input) {
@@ -321,7 +439,30 @@ class FlowChart {
         }
 
         // Second pass: parse graph content
-        const contentLines = contentStartIndex > 0 ? lines.slice(contentStartIndex) : lines;
+        const rawContentLines = contentStartIndex > 0 ? lines.slice(contentStartIndex) : lines;
+        const contentLines = [];
+        let currentBuffer = '';
+
+        for (let i = 0; i < rawContentLines.length; i++) {
+            const rawLine = rawContentLines[i];
+
+            if (currentBuffer) {
+                currentBuffer += '\n' + rawLine;
+            } else {
+                currentBuffer = rawLine.trim();
+            }
+
+            // Check if quotes are balanced (ignoring escaped quotes)
+            const cleanLine = currentBuffer.replace(/\\"/g, '');
+            const quoteCount = (cleanLine.match(/"/g) || []).length;
+
+            if (quoteCount % 2 === 0) {
+                if (currentBuffer) contentLines.push(currentBuffer);
+                currentBuffer = '';
+            }
+        }
+        // Push remaining buffer if any
+        if (currentBuffer) contentLines.push(currentBuffer);
 
         contentLines.forEach(line => {
             line = line.trim();
@@ -552,18 +693,18 @@ class FlowChart {
         let shape = 'rect';
 
         const shapes = [
-            { regex: /^([^\s\[]+)\[\[(.+)\]\]$/, type: 'subroutine' },
-            { regex: /^([^\s\[]+)\[\((.+)\)\]$/, type: 'cylinder' },
-            { regex: /^([^\s\[]+)\(\((.+)\)\)$/, type: 'circle' },
-            { regex: /^([^\s\[]+)\(\[(.+)\]\)$/, type: 'stadium' },
-            { regex: /^([^\s\[]+)\{\{(.+)\}\}$/, type: 'hexagon' },
-            { regex: /^([^\s\[]+)\[\/(.+)\/\]$/, type: 'parallelogram' },
-            { regex: /^([^\s\[]+)\[\\(.+)\\\]$/, type: 'parallelogram_alt' },
-            { regex: /^([^\s\[]+)\[\/(.+)\\\]$/, type: 'trapezoid' },
-            { regex: /^([^\s\[]+)\[\\(.+)\/\]$/, type: 'trapezoid_alt' },
-            { regex: /^([^\s\[]+)\{(.+)\}$/, type: 'rhombus' },
-            { regex: /^([^\s\[]+)\((.+)\)$/, type: 'round' },
-            { regex: /^([^\s\[]+)\[(.+)\]$/, type: 'rect' }
+            { regex: /^([^\s\[]+)\[\[([\s\S]+)\]\]$/, type: 'subroutine' },
+            { regex: /^([^\s\[]+)\[\(([\s\S]+)\)\]$/, type: 'cylinder' },
+            { regex: /^([^\s\[]+)\(\(([\s\S]+)\)\)$/, type: 'circle' },
+            { regex: /^([^\s\[]+)\(\[([\s\S]+)\]\)$/, type: 'stadium' },
+            { regex: /^([^\s\[]+)\{\{([\s\S]+)\}\}$/, type: 'hexagon' },
+            { regex: /^([^\s\[]+)\[\/([\s\S]+)\/\]$/, type: 'parallelogram' },
+            { regex: /^([^\s\[]+)\[\\([\s\S]+)\\\]$/, type: 'parallelogram_alt' },
+            { regex: /^([^\s\[]+)\[\/([\s\S]+)\\\]$/, type: 'trapezoid' },
+            { regex: /^([^\s\[]+)\[\\([\s\S]+)\/\]$/, type: 'trapezoid_alt' },
+            { regex: /^([^\s\[]+)\{([\s\S]+)\}$/, type: 'rhombus' },
+            { regex: /^([^\s\[]+)\(([\s\S]+)\)$/, type: 'round' },
+            { regex: /^([^\s\[]+)\[([\s\S]+)\]$/, type: 'rect' }
         ];
 
         for (let s of shapes) {
@@ -571,12 +712,18 @@ class FlowChart {
             if (match) {
                 id = match[1];
                 label = match[2];
+                // Strip quotes around label if present
+                label = label.trim();
+                if (label.startsWith('"') && label.endsWith('"') && label.length >= 2) {
+                    label = label.substring(1, label.length - 1);
+                    label = label.replace(/\\"/g, '"');
+                }
                 shape = s.type;
                 break;
             }
         }
 
-        // If no shape matched, id is the whole string (plain node)
+        // If no shape matched, check if it's a plain node but allow quotes if ::: is used
         if (id === str && label === str) {
             // Check for ::: in plain node (already extracted above)
             id = str;
@@ -626,11 +773,11 @@ class FlowChart {
             let levelSep, siblingSep;
 
             if (isHorizontal) {
-                levelSep = this.nodeWidth + 80;
-                siblingSep = this.nodeHeight + 40;
+                levelSep = this.maxNodeWidth + 80;
+                siblingSep = this.maxNodeHeight + 40;
             } else {
-                levelSep = this.nodeHeight + 80;
-                siblingSep = this.nodeWidth + 40;
+                levelSep = this.maxNodeHeight + 80;
+                siblingSep = this.maxNodeWidth + 40;
             }
 
             const levelCoord = level * levelSep;
@@ -705,10 +852,12 @@ class FlowChart {
             group.setAttribute('transform', `translate(${node.x}, ${node.y})`);
 
             if (this.config.interactive) {
+                const nodeId = node.id; // Capture the ID, not the node reference
                 group.addEventListener('click', (e) => {
                     e.stopPropagation();
-                    if (node.children && node.children.length > 0) {
-                        node.collapsed = !node.collapsed;
+                    const currentNode = this.data.nodes[nodeId]; // Get current node by ID
+                    if (currentNode && currentNode.children && currentNode.children.length > 0) {
+                        currentNode.collapsed = !currentNode.collapsed;
                         this.computeLayout();
                         this.draw();
                     }
@@ -730,7 +879,7 @@ class FlowChart {
 
         group.innerHTML = '';
 
-        const shapePath = this.getShapePath(node.shape, this.nodeWidth, this.nodeHeight);
+        const shapePath = this.getShapePath(node.shape, node.width, node.height);
         const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
         path.setAttribute('d', shapePath);
         path.setAttribute('class', 'node-shape');
@@ -759,17 +908,17 @@ class FlowChart {
         const dots = [];
         if (isHorizontal) {
             if ((node.parents && node.parents.length > 0) || (node.id !== this.root?.id)) {
-                dots.push({ x: -this.nodeWidth / 2, y: 0 });
+                dots.push({ x: -node.width / 2, y: 0 });
             }
             if (node.children && node.children.length > 0) {
-                dots.push({ x: this.nodeWidth / 2, y: 0 });
+                dots.push({ x: node.width / 2, y: 0 });
             }
         } else {
             if ((node.parents && node.parents.length > 0) || (node.id !== this.root?.id)) {
-                dots.push({ x: 0, y: -this.nodeHeight / 2 });
+                dots.push({ x: 0, y: -node.height / 2 });
             }
             if (node.children && node.children.length > 0) {
-                dots.push({ x: 0, y: this.nodeHeight / 2 });
+                dots.push({ x: 0, y: node.height / 2 });
             }
         }
 
@@ -802,7 +951,15 @@ class FlowChart {
                 const tspan = document.createElementNS('http://www.w3.org/2000/svg', 'tspan');
                 tspan.setAttribute('x', 0);
                 tspan.setAttribute('dy', index === 0 ? startY + 'em' : lineHeight + 'em');
-                tspan.textContent = line;
+
+                // Basic HTML support: <b>
+                let content = line;
+                if (content.match(/<b>.*<\/b>/i) || content.match(/<strong>.*<\/strong>/i)) {
+                    tspan.style.fontWeight = 'bold';
+                    content = content.replace(/<\/?b>/gi, '').replace(/<\/?strong>/gi, '');
+                }
+
+                tspan.textContent = content;
                 text.appendChild(tspan);
             });
         }
@@ -811,11 +968,11 @@ class FlowChart {
         if (node.children && node.children.length > 0) {
             const indicator = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
             if (isHorizontal) {
-                indicator.setAttribute('cx', this.nodeWidth / 2 + 6);
+                indicator.setAttribute('cx', node.width / 2 + 6);
                 indicator.setAttribute('cy', 0);
             } else {
                 indicator.setAttribute('cx', 0);
-                indicator.setAttribute('cy', this.nodeHeight / 2 + 8);
+                indicator.setAttribute('cy', node.height / 2 + 8);
             }
             indicator.setAttribute('r', 5);
             indicator.setAttribute('class', 'node-indicator');
@@ -853,7 +1010,8 @@ class FlowChart {
                 return `M ${-hw} ${-hh} H ${hw} L ${hw - 15} ${hh} H ${-hw + 15} Z`;
             case 'rect':
             default:
-                const rad = Math.min(w, h) / 2;
+                // Boxy with light corner rounding
+                const rad = 5;
                 return `M ${-hw + rad} ${-hh} H ${hw - rad} A ${rad} ${rad} 0 0 1 ${hw} ${-hh + rad} V ${hh - rad} A ${rad} ${rad} 0 0 1 ${hw - rad} ${hh} H ${-hw + rad} A ${rad} ${rad} 0 0 1 ${-hw} ${hh - rad} V ${-hh + rad} A ${rad} ${rad} 0 0 1 ${-hw + rad} ${-hh} Z`;
         }
     }
@@ -930,15 +1088,15 @@ class FlowChart {
         let x1, y1, x2, y2;
 
         if (isHorizontal) {
-            x1 = source.x + this.nodeWidth / 2;
+            x1 = source.x + source.width / 2;
             y1 = source.y;
-            x2 = target.x - this.nodeWidth / 2;
+            x2 = target.x - target.width / 2;
             y2 = target.y;
         } else {
             x1 = source.x;
-            y1 = source.y + this.nodeHeight / 2;
+            y1 = source.y + source.height / 2;
             x2 = target.x;
-            y2 = target.y - this.nodeHeight / 2;
+            y2 = target.y - target.height / 2;
         }
 
         // Determine curve type: linkStyle specific > defaultCurve > bezier
@@ -1064,15 +1222,15 @@ class FlowChart {
             let x1, y1, x2, y2;
 
             if (isHorizontal) {
-                x1 = source.x + this.nodeWidth / 2;
+                x1 = source.x + source.width / 2;
                 y1 = source.y;
-                x2 = target.x - this.nodeWidth / 2;
+                x2 = target.x - target.width / 2;
                 y2 = target.y;
             } else {
                 x1 = source.x;
-                y1 = source.y + this.nodeHeight / 2;
+                y1 = source.y + source.height / 2;
                 x2 = target.x;
-                y2 = target.y - this.nodeHeight / 2;
+                y2 = target.y - target.height / 2;
             }
 
             let d;
@@ -1140,7 +1298,7 @@ class FlowChart {
             nodeGroup.setAttribute('transform', `translate(${node.x}, ${node.y})`);
 
             // Node shape
-            const shapePath = this.getShapePath(node.shape, this.nodeWidth, this.nodeHeight);
+            const shapePath = this.getShapePath(node.shape, node.width, node.height);
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             path.setAttribute('d', shapePath);
             path.setAttribute('fill', resolvedNodeFill);
@@ -1154,17 +1312,17 @@ class FlowChart {
             const dots = [];
             if (isHorizontal) {
                 if ((node.parents && node.parents.length > 0) || (node.id !== this.root?.id)) {
-                    dots.push({ x: -this.nodeWidth / 2, y: 0 });
+                    dots.push({ x: -node.width / 2, y: 0 });
                 }
                 if (node.children && node.children.length > 0) {
-                    dots.push({ x: this.nodeWidth / 2, y: 0 });
+                    dots.push({ x: node.width / 2, y: 0 });
                 }
             } else {
                 if ((node.parents && node.parents.length > 0) || (node.id !== this.root?.id)) {
-                    dots.push({ x: 0, y: -this.nodeHeight / 2 });
+                    dots.push({ x: 0, y: -node.height / 2 });
                 }
                 if (node.children && node.children.length > 0) {
-                    dots.push({ x: 0, y: this.nodeHeight / 2 });
+                    dots.push({ x: 0, y: node.height / 2 });
                 }
             }
 
@@ -1205,11 +1363,11 @@ class FlowChart {
             if (node.children && node.children.length > 0) {
                 const indicator = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
                 if (isHorizontal) {
-                    indicator.setAttribute('cx', this.nodeWidth / 2 + 6);
+                    indicator.setAttribute('cx', node.width / 2 + 6);
                     indicator.setAttribute('cy', 0);
                 } else {
                     indicator.setAttribute('cx', 0);
-                    indicator.setAttribute('cy', this.nodeHeight / 2 + 8);
+                    indicator.setAttribute('cy', node.height / 2 + 8);
                 }
                 indicator.setAttribute('r', 5);
                 indicator.setAttribute('fill', node.collapsed ? '#ff5555' : '#55ff55');

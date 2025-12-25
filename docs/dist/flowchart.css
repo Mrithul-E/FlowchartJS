@@ -1,79 +1,96 @@
 :root {
+    /* Shared colors / Default Light Theme Base */
     --bg-color: #ffffff;
-    /* Clean white */
-    --border-color: #eee;
-    --node-fill: #EFECE6;
-    /* Beige pills */
-    --node-stroke: #EFECE6;
-    --node-text: #111111;
-    --edge-stroke: #000000;
-    /* Pure Black */
-    --edge-text: #000;
+    --border-color: #ddd;
+
+    /* Node Styles */
+    --node-fill: #161616;
+    /* Dark node fill as requested */
+    --node-stroke: #555555;
+    /* Light gray border for nodes */
+    --node-text: #EFECE6;
+    /* Light text for nodes */
+
+    /* Edge Styles */
+    --edge-stroke: #888888;
+    /* Grey edges */
+    --edge-text: #333333;
+    /* Dark text for edge labels (in light mode) */
+
     --indicator-stroke: #fff;
     --connector-fill: #333;
-    /* Dark connector dots */
-    --hover-fill: #e6f7ff;
-    --hover-stroke: #40a9ff;
-    --hover-shadow: rgba(24, 144, 255, 0.2);
-    --node-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+
+    /* Interaction Styles */
+    --hover-fill: #2a2a2a;
+    --hover-stroke: #777;
+    --hover-shadow: rgba(0, 0, 0, 0.2);
+    --node-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 
 [data-theme="light"] {
-    --bg-color: #ffffff;
-    --border-color: #eee;
-    --node-fill: #EFECE6;
-    --node-stroke: #EFECE6;
-    --node-text: #111111;
-    --edge-stroke: #000000;
-    --edge-text: #000;
-    --indicator-stroke: #fff;
-    --connector-fill: #333;
-    --hover-fill: #e6f7ff;
-    --hover-stroke: #40a9ff;
-    --hover-shadow: rgba(24, 144, 255, 0.2);
-    --node-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    --bg-color: #f8f9fa;
+    --border-color: #e9ecef;
+    --node-fill: #ffffff;
+    --node-stroke: #333;
+    --node-text: #161616;
+    --edge-stroke: #333;
+    --edge-text: #111;
+    --indicator-stroke: #000;
+    --connector-fill: #666;
+    --hover-fill: #f0f0f0;
+    --hover-stroke: #000;
+    --hover-shadow: rgba(0, 0, 0, 0.1);
+    --node-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 [data-theme="dark"] {
-    --bg-color: #111111;
-    --border-color: #333;
-    --node-fill: #EFECE6;
-    --node-stroke: #EFECE6;
-    --node-text: #111111;
-    --edge-stroke: #ffffff;
-    /* White edges */
-    --edge-text: #ccc;
+    --bg-color: #050A14;
+    /* Deep dark blue/black background */
+    --border-color: #2a2a3a;
+
+    --node-fill: #161616;
+    /* Dark grey/black node fill */
+    --node-stroke: #555555;
+    /* Grey border */
+    --node-text: #EFECE6;
+    /* Off-white text */
+
+    --edge-stroke: #888888;
+    /* Grey connection lines */
+    --edge-text: #cccccc;
+    /* Light grey edge text */
+
     --indicator-stroke: #111;
     --connector-fill: #fff;
-    --hover-fill: #fff;
+
+    --hover-fill: #222;
     --hover-stroke: #fff;
-    --hover-shadow: rgba(255, 255, 255, 0.2);
-    --node-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+    --hover-shadow: rgba(0, 0, 0, 0.5);
+    --node-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
 }
 
 .flowchart-container {
     width: 100%;
     height: 100%;
-    /* border and background are handled by container or theme, 
-       but for library defaults we can set background to be safe */
     background-color: var(--bg-color);
     overflow: hidden;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Inter', 'Segoe UI', sans-serif;
     position: relative;
-    transition: background-color 0.3s ease, border-color 0.3s ease;
+    transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 .node-group {
-    transition: transform 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease;
+    transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), opacity 0.3s ease;
     cursor: pointer;
 }
 
 .node-shape {
     fill: var(--node-fill);
     stroke: var(--node-stroke);
-    stroke-width: 0px;
+    stroke-width: 1.5px;
+    /* Visible border */
     transition: all 0.3s ease;
-    filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.1));
+    filter: drop-shadow(var(--node-shadow));
 }
 
 .node-group:hover .node-shape {
@@ -83,7 +100,7 @@
 }
 
 .node-connector {
-    fill: var(--connector-fill, #999);
+    fill: var(--connector-fill);
     stroke: none;
     transition: fill 0.3s ease;
 }
@@ -94,6 +111,7 @@
     pointer-events: none;
     user-select: none;
     transition: fill 0.3s ease;
+    font-weight: 400;
 }
 
 .node-text tspan {
@@ -107,9 +125,9 @@
 .edge-path {
     fill: none;
     stroke: var(--edge-stroke);
-    stroke-width: 2px;
+    stroke-width: 1.5px;
     stroke-opacity: 1;
-    transition: d 0.5s cubic-bezier(0.25, 0.8, 0.25, 1), stroke 0.3s ease;
+    transition: stroke 0.3s ease;
 }
 
 .edge-text {
@@ -120,8 +138,9 @@
 
 .edge-label-bg {
     fill: var(--bg-color);
-    stroke: var(--border-color);
+    stroke: var(--edge-stroke);
     stroke-width: 1px;
+    opacity: 0.8;
     transition: fill 0.3s ease, stroke 0.3s ease;
 }
 
@@ -149,44 +168,45 @@
 }
 
 ::-webkit-scrollbar-thumb {
-    background: #888;
+    background: #444;
     border-radius: 4px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-    background: #555;
+    background: #666;
 }
 
 /* Zoom Controls */
 .flowchart-zoom-controls {
     position: absolute;
-    bottom: 16px;
-    right: 16px;
+    bottom: 20px;
+    left: 20px;
+    /* Moved to left as per common preference or keep right */
+    right: auto;
     display: flex;
     flex-direction: column;
-    gap: 4px;
+    gap: 6px;
     z-index: 100;
 }
 
 .flowchart-zoom-btn {
-    width: 36px;
-    height: 36px;
-    border: 1px solid var(--border-color);
-    background: var(--bg-color);
-    color: var(--edge-stroke);
-    border-radius: 6px;
+    width: 32px;
+    height: 32px;
+    border: 1px solid var(--node-stroke);
+    background: var(--node-fill);
+    color: var(--node-text);
+    border-radius: 4px;
     cursor: pointer;
     font-size: 18px;
-    font-weight: bold;
     display: flex;
     align-items: center;
     justify-content: center;
     transition: all 0.2s;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
 
 .flowchart-zoom-btn:hover {
     background: var(--hover-fill);
     border-color: var(--hover-stroke);
-    color: #111111;
+    color: var(--node-text);
 }
