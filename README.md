@@ -16,23 +16,23 @@ A lightweight, themeable, and interactive flowchart library for the modern web. 
 
 ### CDN
 ```html
-<link rel="stylesheet" href="https://unpkg.com/flowchartjs/dist/flowchart.css">
-<script src="https://unpkg.com/flowchartjs/dist/flowchart.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Mrithul-E/FlowchartJS/docs/dist/flowchart.css">
+<script src="https://cdn.jsdelivr.net/gh/Mrithul-E/FlowchartJS/docs/dist/flowchart.js"></script>
 ```
 
 ### Local Manual Installation
 Download the files from the `docs/dist/` folder and include them in your project:
 ```html
-<link rel="stylesheet" href="docs/dist/flowchart.css">
-<script src="docs/dist/flowchart.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Mrithul-E/FlowchartJS/docs/dist/flowchart.css">
+<script src="https://cdn.jsdelivr.net/gh/Mrithul-E/FlowchartJS/docs/dist/flowchart.js"></script>
 ```
 
 ## Quick Start (Local)        
 
 1. **Include the files**:
    ```html
-   <link rel="stylesheet" href="docs/dist/flowchart.css">
-   <script src="docs/dist/flowchart.js"></script>
+   <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Mrithul-E/FlowchartJS/docs/dist/flowchart.css">
+   <script src="https://cdn.jsdelivr.net/gh/Mrithul-E/FlowchartJS/docs/dist/flowchart.js"></script>
    ```
 
 2. **Create a container**:

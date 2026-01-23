@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>FlowchartJS - Interactive Flowcharts with JavaScript</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="dist/flowchart.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Mrithul-E/FlowchartJS/docs/dist/flowchart.css">
     <style>
         :root {
             --bg-primary: #1a1a2e;
@@ -678,8 +678,8 @@
             <section id="getting-started">
                 <h2>Getting Started</h2>
                 <p>Include the CSS and JS files in your HTML:</p>
-                <pre><code>&lt;link rel="stylesheet" href="dist/flowchart.css"&gt;
-&lt;script src="dist/flowchart.js"&gt;&lt;/script&gt;</code></pre>
+                <pre><code>&lt;link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Mrithul-E/FlowchartJS/docs/dist/flowchart.css"&gt;
+&lt;script src="https://cdn.jsdelivr.net/gh/Mrithul-E/FlowchartJS/docs/dist/flowchart.js"&gt;&lt;/script&gt;</code></pre>
 
                 <p>Create a container and initialize the chart:</p>
                 <pre><code>&lt;div id="my-chart"&gt;&lt;/div&gt;
@@ -812,7 +812,8 @@ chart.render(`
     linkStyle 0 stroke:#ff0000,stroke-width:4px,curve:step
     linkStyle 1 stroke:blue,curve:linear</code></pre>
                 <p>Supported curve types: <code>bezier</code> (default), <code>linear</code>, <code>step</code>,
-                    <code>stepAfter</code>, <code>stepBefore</code>.</p>
+                    <code>stepAfter</code>, <code>stepBefore</code>.
+                </p>
 
                 <h3>Node Styling</h3>
                 <p>Apply inline styles to specific nodes using <code>style</code>:</p>
@@ -820,7 +821,8 @@ chart.render(`
 
                 <h3>Classes</h3>
                 <p>Define reusable classes with <code>classDef</code> and apply them using <code>class</code> or the
-                    <code>:::</code> shorthand.</p>
+                    <code>:::</code> shorthand.
+                </p>
                 <pre><code>classDef error fill:#ff0000,color:#fff
 classDef success fill:#00ff00,color:#000
 
@@ -949,7 +951,7 @@ chart.setTheme('light');</code></pre>
         </aside>
     </div>
 
-    <script src="dist/flowchart.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/Mrithul-E/FlowchartJS/docs/dist/flowchart.js"></script>
     <script>
         // Toggle sidebar for mobile
         function toggleSidebar() {
