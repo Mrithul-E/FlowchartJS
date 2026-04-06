@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "mermaid Docs": {
+      "type": "sse",
+      "url": "https://gitmcp.io/mermaid-js/mermaid"
+    }
+  }
+}
