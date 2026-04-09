@@ -4,9 +4,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FlowchartJS - Interactive Flowcharts with JavaScript</title>
+    <title>Flowchart JS Library for Interactive Flowcharts in JavaScript | FlowchartJS</title>
+    <meta name="description"
+        content="FlowchartJS is a JavaScript flowchart library for building interactive flowcharts from simple text syntax. Create flow chart JS diagrams, export them, and try the live playground.">
+    <meta name="robots" content="index, follow, max-image-preview:large">
+    <link rel="canonical" href="https://flowchartjs.mrithul.in/">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://flowchartjs.mrithul.in/">
+    <meta property="og:title" content="Flowchart JS Library for Interactive Flowcharts in JavaScript">
+    <meta property="og:description"
+        content="Build interactive flowcharts with JavaScript using simple text syntax. Explore FlowchartJS docs, features, API methods, and the live playground.">
+    <meta property="og:site_name" content="FlowchartJS">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="Flowchart JS Library for Interactive Flowcharts in JavaScript">
+    <meta name="twitter:description"
+        content="A lightweight JavaScript flowchart library for interactive flowcharts, flow chart JS diagrams, and embeddable HTML flowchart tools.">
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/Mrithul-E/FlowchartJS/docs/dist/flowchart.css">
+    <script type="application/ld+json">
+        {
+            "@context": "https://schema.org",
+            "@type": "SoftwareApplication",
+            "name": "FlowchartJS",
+            "applicationCategory": "DeveloperApplication",
+            "operatingSystem": "Web",
+            "url": "https://flowchartjs.mrithul.in/",
+            "description": "FlowchartJS is a JavaScript flowchart library and interactive flowchart tool for creating flowcharts from simple text syntax.",
+            "offers": {
+                "@type": "Offer",
+                "price": "0",
+                "priceCurrency": "USD"
+            },
+            "keywords": [
+                "flowchart js",
+                "interactive flowchart javascript",
+                "javascript flowchart",
+                "flowchart library javascript",
+                "html flowchart library"
+            ]
+        }
+    </script>
     <style>
         :root {
             --bg-primary: #1a1a2e;
@@ -286,6 +323,15 @@
             margin-bottom: 32px;
         }
 
+        .content-list {
+            margin: 0 0 24px 20px;
+            color: var(--text-secondary);
+        }
+
+        .content-list li {
+            margin-bottom: 8px;
+        }
+
         a {
             color: var(--link-color);
         }
@@ -555,7 +601,7 @@
     <nav class="navbar">
         <div style="display: flex; align-items: center; gap: 16px;">
             <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
-            <a class="navbar-brand" href="#">
+            <a class="navbar-brand" href="./" aria-label="FlowchartJS home">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M4 4h6v6H4V4zm10 0h6v6h-6V4zM4 14h6v6H4v-6zm10 0h6v6h-6v-6z" />
                 </svg>
@@ -563,7 +609,7 @@
             </a>
         </div>
         <div class="nav-links">
-            <a href="#" class="nav-link active">Docs</a>
+            <a href="./" class="nav-link active">Docs</a>
             <a href="https://github.com/Mrithul-E/FlowchartJS" class="nav-link">GitHub</a>
             <a href="playground.html" class="btn-playground">
                 Try Now
@@ -588,6 +634,8 @@
                 </div>
                 <div class="sidebar-links">
                     <a href="#about" class="sidebar-link active">About FlowchartJS</a>
+                    <a href="#features" class="sidebar-link">Features</a>
+                    <a href="#use-cases" class="sidebar-link">Use Cases</a>
                     <a href="#getting-started" class="sidebar-link">Getting Started</a>
                     <a href="#syntax" class="sidebar-link">Syntax Guide</a>
                 </div>
@@ -649,12 +697,21 @@
 
             <!-- About Section -->
             <section id="about">
-                <h1>About FlowchartJS</h1>
-                <p class="lead">FlowchartJS lets you create interactive diagrams and visualizations using text and code.
+                <h1>Flowchart JS Library for Interactive Flowcharts in JavaScript</h1>
+                <p class="lead">FlowchartJS is a lightweight JavaScript flowchart library for building interactive
+                    flowcharts from simple text syntax.</p>
+
+                <p>Use FlowchartJS to create a <strong>javascript flowchart</strong>, embed an
+                    <strong>interactive flowchart JavaScript</strong> experience in your app, or build a fast
+                    <strong>HTML flowchart library</strong> workflow with zero dependencies. You can jump into the <a
+                        href="playground.html">live playground</a>, follow the <a href="#getting-started">getting
+                        started guide</a>, or browse the <a href="#api">API methods</a> below.
                 </p>
 
-                <p>It is a lightweight JavaScript library that renders <strong>Mermaid-inspired</strong> text
-                    definitions to create flowcharts dynamically. Zero dependencies, pure Vanilla JS.</p>
+                <p>It renders <strong>Mermaid-inspired</strong> text definitions into dynamic diagrams using pure
+                    Vanilla JS, making it a practical option for teams searching for <strong>flowchart js</strong> or
+                    <strong>flowchart.js</strong> tooling without a heavy framework.
+                </p>
 
                 <div class="info-block">
                     <p>If you are familiar with Mermaid syntax, you should have no problem learning <a
@@ -672,6 +729,18 @@
                         <div id="demo-chart"></div>
                     </div>
                 </div>
+
+                <h2 id="features">Features</h2>
+                <p>FlowchartJS focuses on the core features most developers want from a flow chart JS library.</p>
+                <ul class="content-list">
+                    <li>Create interactive flowcharts in JavaScript from readable text syntax.</li>
+                    <li>Style nodes, links, classes, and themes without changing your app structure.</li>
+                    <li>Export diagrams as PNG or SVG for docs, dashboards, and product flows.</li>
+                </ul>
+
+                <h2 id="use-cases">Use Cases</h2>
+                <p>This JavaScript flowchart tool works well for product flows, decision trees, process mapping, app
+                    onboarding diagrams, and embeddable documentation examples.</p>
             </section>
 
             <!-- Getting Started -->
@@ -697,6 +766,10 @@ chart.render(`
     B --> |No| D[End]
 `);
 &lt;/script&gt;</code></pre>
+
+                <p>After setup, continue to the <a href="#syntax">syntax guide</a> to learn the text format or review
+                    <a href="#config">configuration options</a> for theming and interactivity.
+                </p>
             </section>
 
             <!-- Syntax Guide -->
@@ -938,6 +1011,8 @@ chart.setTheme('light');</code></pre>
         <aside class="toc">
             <div class="toc-title">On this page</div>
             <a href="#about" class="toc-link">About FlowchartJS</a>
+            <a href="#features" class="toc-link">Features</a>
+            <a href="#use-cases" class="toc-link">Use Cases</a>
             <a href="#getting-started" class="toc-link">Getting Started</a>
             <a href="#syntax" class="toc-link">Syntax Guide</a>
             <a href="#shapes" class="toc-link">Node Shapes</a>
